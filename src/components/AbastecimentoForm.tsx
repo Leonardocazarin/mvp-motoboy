@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Fuel, Camera, Image, Loader2, CheckCircle2 } from 'lucide-react';
 import { saveAbastecimento, getKmTotal } from '@/lib/storage';
 import { toast } from 'sonner';
-import Tesseract from 'tesseract.js';
 
 interface AbastecimentoFormProps {
   onSave: () => void;
@@ -75,6 +74,9 @@ export default function AbastecimentoForm({ onSave }: AbastecimentoFormProps) {
     toast.info('Processando imagem da bomba...');
 
     try {
+      // Importação dinâmica do Tesseract para evitar erros de SSR
+      const Tesseract = (await import('tesseract.js')).default;
+      
       const { data: { text } } = await Tesseract.recognize(file, 'por', {
         logger: (m) => {
           if (m.status === 'recognizing text') {
@@ -83,7 +85,7 @@ export default function AbastecimentoForm({ onSave }: AbastecimentoFormProps) {
         },
       });
 
-      // Extrair números do texto
+      // Extrair números do texto com melhor precisão
       const numeros = text.match(/\d+[.,]?\d*/g);
       
       if (!numeros || numeros.length < 2) {
@@ -92,17 +94,17 @@ export default function AbastecimentoForm({ onSave }: AbastecimentoFormProps) {
         return;
       }
 
-      // Heurística: geralmente litros é menor que valor total
+      // Heurística melhorada: geralmente litros é menor que valor total
       const valores = numeros
         .map(n => parseFloat(n.replace(',', '.')))
         .filter(n => !isNaN(n) && n > 0)
         .sort((a, b) => a - b);
 
       if (valores.length >= 2) {
-        // Litros geralmente entre 5 e 50
-        const possiveisLitros = valores.filter(v => v >= 5 && v <= 50);
-        // Valor geralmente maior que 30
-        const possiveisValores = valores.filter(v => v >= 30);
+        // Litros geralmente entre 3 e 50
+        const possiveisLitros = valores.filter(v => v >= 3 && v <= 50);
+        // Valor geralmente maior que 20
+        const possiveisValores = valores.filter(v => v >= 20);
 
         if (possiveisLitros.length > 0 && possiveisValores.length > 0) {
           setLitros(possiveisLitros[0].toFixed(2));
