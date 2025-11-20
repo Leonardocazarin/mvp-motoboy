@@ -19,18 +19,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Motoboy Cockpit - Controle de Quilometragem",
-  description: "Aplicativo para controle de quilometragem, consumo e manutenção para motoboys",
+  title: "Motoboy Manager - Controle Completo",
+  description: "Aplicativo PWA para controle de entregas, abastecimentos e manutenções para motoboys",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Motoboy Cockpit",
+    title: "Motoboy Manager",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#ea580c",
+  themeColor: "#f97316",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -49,11 +49,12 @@ export default function RootLayout({
         <Script src="/register-sw.js" strategy="afterInteractive" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/icon.svg" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Motoboy Cockpit" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Motoboy Manager" />
         <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="theme-color" content="#f97316" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

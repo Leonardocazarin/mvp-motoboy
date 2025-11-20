@@ -9,10 +9,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CalendarIcon, TrendingUp, Fuel, Wrench, Image as ImageIcon, X } from 'lucide-react';
 import { getDailyRecords, getAbastecimentos, getManutencoes } from '@/lib/storage';
 
-// Função de formatação de data segura (fallback sem date-fns)
+// Função de formatação de data segura e otimizada
 const formatDateSafe = (date: Date | string, format: 'full' | 'month' | 'day' = 'full'): string => {
   try {
-    const d = typeof date === 'string' ? new Date(date + 'T00:00:00') : date;
+    let d: Date;
+    
+    if (typeof date === 'string') {
+      // Garantir que a data seja interpretada como UTC
+      const [year, month, day] = date.split('-').map(Number);
+      d = new Date(year, month - 1, day);
+    } else {
+      d = date;
+    }
     
     if (isNaN(d.getTime())) {
       return 'Data inválida';
@@ -46,10 +54,23 @@ export default function HistoricoView() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dailyRecords, setDailyRecords] = useState<any[]>([]);
+  const [abastecimentos, setAbastecimentos] = useState<any[]>([]);
+  const [manutencoes, setManutencoes] = useState<any[]>([]);
 
   // Garantir que o componente está montado (evita erros de hidratação)
   useEffect(() => {
     setMounted(true);
+    
+    // Carregar dados apenas no cliente
+    try {
+      setDailyRecords(getDailyRecords());
+      setAbastecimentos(getAbastecimentos());
+      setManutencoes(getManutencoes());
+    } catch (err) {
+      console.error('Erro ao carregar dados:', err);
+      setError('Erro ao carregar histórico. Tente recarregar a página.');
+    }
   }, []);
 
   if (!mounted) {
@@ -64,19 +85,6 @@ export default function HistoricoView() {
         </Card>
       </div>
     );
-  }
-
-  let dailyRecords: any[] = [];
-  let abastecimentos: any[] = [];
-  let manutencoes: any[] = [];
-
-  try {
-    dailyRecords = getDailyRecords();
-    abastecimentos = getAbastecimentos();
-    manutencoes = getManutencoes();
-  } catch (err) {
-    console.error('Erro ao carregar dados:', err);
-    setError('Erro ao carregar histórico. Tente recarregar a página.');
   }
 
   // Filtrar dados por data selecionada
