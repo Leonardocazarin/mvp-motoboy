@@ -19,7 +19,6 @@ export function NotificationManager() {
               badge: '/icon-192x192.png',
               tag: alerta.tipo,
               requireInteraction: true,
-              vibrate: [200, 100, 200],
             });
           }
           // Notificar quando estiver próximo (menos de 200km)
@@ -29,7 +28,6 @@ export function NotificationManager() {
               icon: '/icon-192x192.png',
               badge: '/icon-192x192.png',
               tag: alerta.tipo,
-              vibrate: [100, 50, 100],
             });
           }
         });
