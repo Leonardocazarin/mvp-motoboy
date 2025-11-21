@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CalendarIcon, TrendingUp, Fuel, Wrench, Image as ImageIcon, X, AlertCircle } from 'lucide-react';
-import { getDailyRecords, getAbastecimentos, getManutencoes } from '@/lib/storage';
+import { CalendarIcon, TrendingUp, Fuel, Wrench, Image as ImageIcon, X, AlertCircle, Pencil, Trash2 } from 'lucide-react';
+import { getDailyRecords, getAbastecimentos, getManutencoes, deleteAbastecimento, deleteManutencao } from '@/lib/storage';
 
 // Função de formatação de data segura e otimizada
 const formatDateSafe = (date: Date | string, format: 'full' | 'month' | 'day' = 'full'): string => {
@@ -71,11 +71,8 @@ export default function HistoricoView() {
   const [abastecimentos, setAbastecimentos] = useState<any[]>([]);
   const [manutencoes, setManutencoes] = useState<any[]>([]);
 
-  // Garantir que o componente está montado (evita erros de hidratação)
-  useEffect(() => {
-    setMounted(true);
-    
-    // Carregar dados apenas no cliente
+  // Função para recarregar dados
+  const reloadData = () => {
     try {
       setDailyRecords(getDailyRecords());
       setAbastecimentos(getAbastecimentos());
@@ -84,7 +81,29 @@ export default function HistoricoView() {
       console.error('Erro ao carregar dados:', err);
       setError('Erro ao carregar histórico. Tente recarregar a página.');
     }
+  };
+
+  // Garantir que o componente está montado (evita erros de hidratação)
+  useEffect(() => {
+    setMounted(true);
+    reloadData();
   }, []);
+
+  // Função para deletar abastecimento
+  const handleDeleteAbastecimento = (id: string) => {
+    if (confirm('Tem certeza que deseja apagar este registro de abastecimento?')) {
+      deleteAbastecimento(id);
+      reloadData();
+    }
+  };
+
+  // Função para deletar manutenção
+  const handleDeleteManutencao = (id: string) => {
+    if (confirm('Tem certeza que deseja apagar este registro de manutenção?')) {
+      deleteManutencao(id);
+      reloadData();
+    }
+  };
 
   if (!mounted) {
     return (
@@ -234,14 +253,23 @@ export default function HistoricoView() {
                                     Preço por litro: R$ {precoPorLitro}
                                   </p>
                                 </div>
-                                {a.fotoUrl && (
+                                <div className="flex gap-2 flex-shrink-0">
+                                  {a.fotoUrl && (
+                                    <button
+                                      onClick={() => setSelectedImage(a.fotoUrl!)}
+                                      className="p-2 bg-blue-50 dark:bg-blue-950/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors active:scale-95"
+                                    >
+                                      <ImageIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                    </button>
+                                  )}
                                   <button
-                                    onClick={() => setSelectedImage(a.fotoUrl!)}
-                                    className="flex-shrink-0 p-2 bg-blue-50 dark:bg-blue-950/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors active:scale-95"
+                                    onClick={() => handleDeleteAbastecimento(a.id)}
+                                    className="p-2 bg-red-50 dark:bg-red-950/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors active:scale-95"
+                                    title="Apagar registro"
                                   >
-                                    <ImageIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                    <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
                                   </button>
-                                )}
+                                </div>
                               </div>
                             </div>
                           );
@@ -271,9 +299,18 @@ export default function HistoricoView() {
                                     </span>
                                   )}
                                 </div>
-                                <span className="text-blue-600 dark:text-blue-400 font-semibold text-sm sm:text-base flex-shrink-0">
-                                  R$ {m.custo.toFixed(2)}
-                                </span>
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                  <span className="text-blue-600 dark:text-blue-400 font-semibold text-sm sm:text-base">
+                                    R$ {m.custo.toFixed(2)}
+                                  </span>
+                                  <button
+                                    onClick={() => handleDeleteManutencao(m.id)}
+                                    className="p-2 bg-red-50 dark:bg-red-950/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors active:scale-95"
+                                    title="Apagar registro"
+                                  >
+                                    <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
+                                  </button>
+                                </div>
                               </div>
                               <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-2">
                                 {m.kmAtual.toFixed(0)} km
@@ -329,9 +366,9 @@ export default function HistoricoView() {
                       </p>
                     </div>
                     <div className="p-3 sm:p-4 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-lg">
-                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">Custo por KM</p>
+                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">Manutenções</p>
                       <p className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">
-                        {monthlyKm > 0 ? `R$ ${(monthlyGasto / monthlyKm).toFixed(2)}` : '--'}
+                        {monthlyManutencoes.length}
                       </p>
                     </div>
                     <div className="p-3 sm:p-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 rounded-lg">

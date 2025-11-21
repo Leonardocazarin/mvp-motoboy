@@ -48,6 +48,12 @@ export const saveAbastecimento = (abastecimento: Abastecimento) => {
   localStorage.setItem(KEYS.ABASTECIMENTOS, JSON.stringify(abastecimentos));
 };
 
+export const deleteAbastecimento = (id: string) => {
+  const abastecimentos = getAbastecimentos();
+  const filtered = abastecimentos.filter(a => a.id !== id);
+  localStorage.setItem(KEYS.ABASTECIMENTOS, JSON.stringify(filtered));
+};
+
 // Manutenções
 export const getManutencoes = (): Manutencao[] => {
   if (typeof window === 'undefined') return [];
@@ -59,6 +65,12 @@ export const saveManutencao = (manutencao: Manutencao) => {
   const manutencoes = getManutencoes();
   manutencoes.push(manutencao);
   localStorage.setItem(KEYS.MANUTENCOES, JSON.stringify(manutencoes));
+};
+
+export const deleteManutencao = (id: string) => {
+  const manutencoes = getManutencoes();
+  const filtered = manutencoes.filter(m => m.id !== id);
+  localStorage.setItem(KEYS.MANUTENCOES, JSON.stringify(filtered));
 };
 
 // KM Total

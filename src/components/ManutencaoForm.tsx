@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Wrench, Camera, Image, AlertCircle } from 'lucide-react';
 import { saveManutencao } from '@/lib/storage';
+import { toast } from 'sonner';
 
 interface ManutencaoFormProps {
   onSave: () => void;
@@ -77,7 +78,7 @@ export default function ManutencaoForm({ onSave }: ManutencaoFormProps) {
     e.preventDefault();
     
     if (!tipo || !opcaoEscolhida || !valor || !kmAtual) {
-      alert('Preencha todos os campos obrigatórios');
+      toast.error('Preencha todos os campos obrigatórios');
       return;
     }
 
@@ -85,7 +86,7 @@ export default function ManutencaoForm({ onSave }: ManutencaoFormProps) {
     const kmNum = parseFloat(kmAtual);
 
     if (valorNum <= 0 || kmNum <= 0) {
-      alert('Valores devem ser maiores que zero');
+      toast.error('Valores devem ser maiores que zero');
       return;
     }
 
@@ -108,7 +109,7 @@ export default function ManutencaoForm({ onSave }: ManutencaoFormProps) {
     setFoto(null);
     
     onSave();
-    alert('Manutenção registrada com sucesso!');
+    toast.success('✅ Manutenção registrada com sucesso!');
   };
 
   return (

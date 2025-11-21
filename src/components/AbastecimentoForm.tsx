@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Fuel, Camera, Image } from 'lucide-react';
 import { saveAbastecimento } from '@/lib/storage';
+import { toast } from 'sonner';
 
 interface AbastecimentoFormProps {
   onSave: () => void;
@@ -37,7 +38,7 @@ export default function AbastecimentoForm({ onSave }: AbastecimentoFormProps) {
     e.preventDefault();
     
     if (!litros || !valorTotal) {
-      alert('Preencha todos os campos obrigatórios');
+      toast.error('Preencha todos os campos obrigatórios');
       return;
     }
 
@@ -45,7 +46,7 @@ export default function AbastecimentoForm({ onSave }: AbastecimentoFormProps) {
     const valorNum = parseFloat(valorTotal);
 
     if (litrosNum <= 0 || valorNum <= 0) {
-      alert('Valores devem ser maiores que zero');
+      toast.error('Valores devem ser maiores que zero');
       return;
     }
 
@@ -64,7 +65,7 @@ export default function AbastecimentoForm({ onSave }: AbastecimentoFormProps) {
     setFoto(null);
     
     onSave();
-    alert('Abastecimento registrado com sucesso!');
+    toast.success('✅ Abastecimento registrado com sucesso!');
   };
 
   return (
