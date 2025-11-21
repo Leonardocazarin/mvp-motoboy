@@ -95,6 +95,7 @@ export default function MotoboyCockpit() {
             icon: '/icon-192x192.png',
             badge: '/icon-192x192.png',
             tag: alerta.tipo,
+            requireInteraction: true,
           });
         }
       });

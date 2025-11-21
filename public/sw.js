@@ -108,7 +108,6 @@ self.addEventListener('push', (event) => {
     body: event.data ? event.data.text() : 'Nova notificação do Motoboy Cockpit',
     icon: '/icon-192x192.png',
     badge: '/icon-192x192.png',
-    vibrate: [200, 100, 200],
     tag: 'motoboy-notification',
     requireInteraction: false,
     actions: [
