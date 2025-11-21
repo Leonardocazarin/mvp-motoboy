@@ -36,6 +36,11 @@ export const metadata: Metadata = {
       { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
     ],
   },
+  other: {
+    "mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "black-translucent",
+  },
 };
 
 export const viewport: Viewport = {
@@ -63,6 +68,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Motoboy Cockpit" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="theme-color" content="#ea580c" />
+        <meta name="format-detection" content="telephone=no" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

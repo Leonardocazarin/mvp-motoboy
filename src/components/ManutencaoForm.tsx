@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Wrench, Camera, AlertCircle } from 'lucide-react';
+import { Wrench, Camera, Image, AlertCircle } from 'lucide-react';
 import { saveManutencao } from '@/lib/storage';
 
 interface ManutencaoFormProps {
@@ -214,21 +214,40 @@ export default function ManutencaoForm({ onSave }: ManutencaoFormProps) {
 
           <div className="space-y-2">
             <Label htmlFor="foto" className="text-sm sm:text-base font-semibold">Foto do Serviço (Opcional)</Label>
-            <div className="flex items-center gap-3">
+            <div className="grid grid-cols-2 gap-3">
+              {/* Botão para tirar foto com câmera */}
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => document.getElementById('foto')?.click()}
-                className="flex-1 h-12 border-2 hover:border-blue-500 dark:hover:border-blue-600 transition-all shadow-sm font-semibold"
+                onClick={() => document.getElementById('foto-camera')?.click()}
+                className="h-12 border-2 hover:border-blue-500 dark:hover:border-blue-600 transition-all shadow-sm font-semibold"
               >
                 <Camera className="w-5 h-5 mr-2" />
-                {foto ? 'Foto Anexada' : 'Anexar Foto'}
+                Câmera
               </Button>
               <input
-                id="foto"
+                id="foto-camera"
                 type="file"
                 accept="image/*"
                 capture="environment"
+                onChange={handleFotoChange}
+                className="hidden"
+              />
+
+              {/* Botão para selecionar da galeria */}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => document.getElementById('foto-galeria')?.click()}
+                className="h-12 border-2 hover:border-blue-500 dark:hover:border-blue-600 transition-all shadow-sm font-semibold"
+              >
+                <Image className="w-5 h-5 mr-2" />
+                Galeria
+              </Button>
+              <input
+                id="foto-galeria"
+                type="file"
+                accept="image/*"
                 onChange={handleFotoChange}
                 className="hidden"
               />

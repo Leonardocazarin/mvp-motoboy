@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Fuel, Camera } from 'lucide-react';
+import { Fuel, Camera, Image } from 'lucide-react';
 import { saveAbastecimento } from '@/lib/storage';
 
 interface AbastecimentoFormProps {
@@ -120,21 +120,40 @@ export default function AbastecimentoForm({ onSave }: AbastecimentoFormProps) {
 
           <div className="space-y-2">
             <Label htmlFor="foto" className="text-sm sm:text-base font-semibold">Foto do Comprovante (Opcional)</Label>
-            <div className="flex items-center gap-3">
+            <div className="grid grid-cols-2 gap-3">
+              {/* Botão para tirar foto com câmera */}
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => document.getElementById('foto')?.click()}
-                className="flex-1 h-12 border-2 hover:border-orange-500 dark:hover:border-orange-600 transition-all shadow-sm font-semibold"
+                onClick={() => document.getElementById('foto-camera')?.click()}
+                className="h-12 border-2 hover:border-orange-500 dark:hover:border-orange-600 transition-all shadow-sm font-semibold"
               >
                 <Camera className="w-5 h-5 mr-2" />
-                {foto ? 'Foto Anexada' : 'Anexar Foto'}
+                Câmera
               </Button>
               <input
-                id="foto"
+                id="foto-camera"
                 type="file"
                 accept="image/*"
                 capture="environment"
+                onChange={handleFotoChange}
+                className="hidden"
+              />
+
+              {/* Botão para selecionar da galeria */}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => document.getElementById('foto-galeria')?.click()}
+                className="h-12 border-2 hover:border-orange-500 dark:hover:border-orange-600 transition-all shadow-sm font-semibold"
+              >
+                <Image className="w-5 h-5 mr-2" />
+                Galeria
+              </Button>
+              <input
+                id="foto-galeria"
+                type="file"
+                accept="image/*"
                 onChange={handleFotoChange}
                 className="hidden"
               />
