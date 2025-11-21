@@ -1,14 +1,12 @@
 // Gerenciamento de Local Storage
 
-import { DailyRecord, Abastecimento, Manutencao, Usuario, Veiculo } from './types';
+import { DailyRecord, Abastecimento, Manutencao } from './types';
 
 const KEYS = {
   DAILY_RECORDS: 'motoboy_daily_records',
   ABASTECIMENTOS: 'motoboy_abastecimentos',
   MANUTENCOES: 'motoboy_manutencoes',
   KM_TOTAL: 'motoboy_km_total',
-  USUARIO: 'motoboy_usuario',
-  VEICULO: 'motoboy_veiculo',
 };
 
 // Daily Records
@@ -75,26 +73,4 @@ export const setKmTotal = (km: number) => {
 export const addKm = (km: number) => {
   const total = getKmTotal();
   setKmTotal(total + km);
-};
-
-// Usuário
-export const getUsuario = (): Usuario | null => {
-  if (typeof window === 'undefined') return null;
-  const data = localStorage.getItem(KEYS.USUARIO);
-  return data ? JSON.parse(data) : null;
-};
-
-export const saveUsuario = (usuario: Usuario) => {
-  localStorage.setItem(KEYS.USUARIO, JSON.stringify(usuario));
-};
-
-// Veículo
-export const getVeiculo = (): Veiculo | null => {
-  if (typeof window === 'undefined') return null;
-  const data = localStorage.getItem(KEYS.VEICULO);
-  return data ? JSON.parse(data) : null;
-};
-
-export const saveVeiculo = (veiculo: Veiculo) => {
-  localStorage.setItem(KEYS.VEICULO, JSON.stringify(veiculo));
 };
