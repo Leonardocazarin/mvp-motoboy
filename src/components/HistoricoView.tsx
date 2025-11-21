@@ -90,14 +90,14 @@ export default function HistoricoView() {
   // Filtrar dados por data selecionada
   const selectedDateStr = date ? date.toISOString().split('T')[0] : '';
   const dailyData = dailyRecords.find(r => r.date === selectedDateStr);
-  const dailyAbastecimentos = abastecimentos.filter(a => a.date === selectedDateStr);
-  const dailyManutencoes = manutencoes.filter(m => m.date === selectedDateStr);
+  const dailyAbastecimentos = abastecimentos.filter(a => a.date && typeof a.date === 'string' && a.date === selectedDateStr);
+  const dailyManutencoes = manutencoes.filter(m => m.date && typeof m.date === 'string' && m.date === selectedDateStr);
 
   // Dados mensais
   const selectedMonth = date ? date.toISOString().slice(0, 7) : '';
-  const monthlyRecords = dailyRecords.filter(r => r.date.startsWith(selectedMonth));
-  const monthlyAbastecimentos = abastecimentos.filter(a => a.date.startsWith(selectedMonth));
-  const monthlyManutencoes = manutencoes.filter(m => m.date.startsWith(selectedMonth));
+  const monthlyRecords = dailyRecords.filter(r => r.date && typeof r.date === 'string' && r.date.startsWith(selectedMonth));
+  const monthlyAbastecimentos = abastecimentos.filter(a => a.date && typeof a.date === 'string' && a.date.startsWith(selectedMonth));
+  const monthlyManutencoes = manutencoes.filter(m => m.date && typeof m.date === 'string' && m.date.startsWith(selectedMonth));
 
   const monthlyKm = monthlyRecords.reduce((sum, r) => sum + (r.kmRodados || 0), 0);
   const monthlyGasto = monthlyAbastecimentos.reduce((sum, a) => sum + a.valorPago, 0);
@@ -318,8 +318,8 @@ export default function HistoricoView() {
                       {monthlyRecords
                         .sort((a, b) => b.date.localeCompare(a.date))
                         .map((record) => {
-                          const dayAbast = abastecimentos.filter(a => a.date === record.date);
-                          const dayManut = manutencoes.filter(m => m.date === record.date);
+                          const dayAbast = abastecimentos.filter(a => a.date && typeof a.date === 'string' && a.date === record.date);
+                          const dayManut = manutencoes.filter(m => m.date && typeof m.date === 'string' && m.date === record.date);
                           
                           return (
                             <div key={record.id} className="p-3 sm:p-4 bg-white dark:bg-slate-900 rounded-lg border hover:shadow-md transition-shadow">
