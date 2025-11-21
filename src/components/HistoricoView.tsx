@@ -8,6 +8,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CalendarIcon, TrendingUp, Fuel, Wrench, Image as ImageIcon, X, AlertCircle, Pencil, Trash2 } from 'lucide-react';
 import { getDailyRecords, getAbastecimentos, getManutencoes, deleteAbastecimento, deleteManutencao } from '@/lib/storage';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { toast } from 'sonner';
 
 // Função de formatação de data segura e otimizada
 const formatDateSafe = (date: Date | string, format: 'full' | 'month' | 'day' = 'full'): string => {
@@ -70,6 +72,15 @@ export default function HistoricoView() {
   const [dailyRecords, setDailyRecords] = useState<any[]>([]);
   const [abastecimentos, setAbastecimentos] = useState<any[]>([]);
   const [manutencoes, setManutencoes] = useState<any[]>([]);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    type: 'abastecimento' | 'manutencao' | null;
+    id: string | null;
+  }>({
+    open: false,
+    type: null,
+    id: null,
+  });
 
   // Função para recarregar dados
   const reloadData = () => {
@@ -89,20 +100,27 @@ export default function HistoricoView() {
     reloadData();
   }, []);
 
-  // Função para deletar abastecimento
-  const handleDeleteAbastecimento = (id: string) => {
-    if (confirm('Tem certeza que deseja apagar este registro de abastecimento?')) {
-      deleteAbastecimento(id);
-      reloadData();
-    }
+  // Função para abrir dialog de confirmação
+  const openConfirmDialog = (type: 'abastecimento' | 'manutencao', id: string) => {
+    setConfirmDialog({
+      open: true,
+      type,
+      id,
+    });
   };
 
-  // Função para deletar manutenção
-  const handleDeleteManutencao = (id: string) => {
-    if (confirm('Tem certeza que deseja apagar este registro de manutenção?')) {
-      deleteManutencao(id);
-      reloadData();
+  // Função para confirmar exclusão
+  const handleConfirmDelete = () => {
+    if (confirmDialog.type === 'abastecimento' && confirmDialog.id) {
+      deleteAbastecimento(confirmDialog.id);
+      toast.success('✅ Abastecimento apagado com sucesso!');
+    } else if (confirmDialog.type === 'manutencao' && confirmDialog.id) {
+      deleteManutencao(confirmDialog.id);
+      toast.success('✅ Manutenção apagada com sucesso!');
     }
+    
+    reloadData();
+    setConfirmDialog({ open: false, type: null, id: null });
   };
 
   if (!mounted) {
@@ -263,7 +281,7 @@ export default function HistoricoView() {
                                     </button>
                                   )}
                                   <button
-                                    onClick={() => handleDeleteAbastecimento(a.id)}
+                                    onClick={() => openConfirmDialog('abastecimento', a.id)}
                                     className="p-2 bg-red-50 dark:bg-red-950/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors active:scale-95"
                                     title="Apagar registro"
                                   >
@@ -304,7 +322,7 @@ export default function HistoricoView() {
                                     R$ {m.custo.toFixed(2)}
                                   </span>
                                   <button
-                                    onClick={() => handleDeleteManutencao(m.id)}
+                                    onClick={() => openConfirmDialog('manutencao', m.id)}
                                     className="p-2 bg-red-50 dark:bg-red-950/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors active:scale-95"
                                     title="Apagar registro"
                                   >
@@ -460,6 +478,19 @@ export default function HistoricoView() {
           </div>
         </div>
       )}
+
+      {/* Dialog de Confirmação */}
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}
+        onConfirm={handleConfirmDelete}
+        title="Apagar registro?"
+        description={
+          confirmDialog.type === 'abastecimento'
+            ? 'Tem certeza que deseja apagar este registro de abastecimento? Esta ação não pode ser desfeita.'
+            : 'Tem certeza que deseja apagar este registro de manutenção? Esta ação não pode ser desfeita.'
+        }
+      />
     </div>
   );
 }

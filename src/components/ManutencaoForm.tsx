@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Wrench, Camera, Image, AlertCircle } from 'lucide-react';
-import { saveManutencao } from '@/lib/storage';
+import { saveManutencao, getVeiculo } from '@/lib/storage';
 import { toast } from 'sonner';
 
 interface ManutencaoFormProps {
@@ -59,6 +59,14 @@ export default function ManutencaoForm({ onSave }: ManutencaoFormProps) {
   const [kmAtual, setKmAtual] = useState('');
   const [foto, setFoto] = useState<string | null>(null);
 
+  // Carregar KM Atual do veículo automaticamente
+  useEffect(() => {
+    const veiculo = getVeiculo();
+    if (veiculo && veiculo.kmAtual) {
+      setKmAtual(veiculo.kmAtual.toString());
+    }
+  }, []);
+
   // Obter recomendação automática baseada no tipo
   const recomendacao = tipo ? recomendacoesManutencao[tipo] : '';
   const opcoes = tipo ? opcoesManutencao[tipo] : [];
@@ -105,7 +113,11 @@ export default function ManutencaoForm({ onSave }: ManutencaoFormProps) {
     setTipo('');
     setOpcaoEscolhida('');
     setValor('');
-    setKmAtual('');
+    // Manter o KM Atual preenchido para próxima manutenção
+    const veiculo = getVeiculo();
+    if (veiculo && veiculo.kmAtual) {
+      setKmAtual(veiculo.kmAtual.toString());
+    }
     setFoto(null);
     
     onSave();
@@ -200,7 +212,12 @@ export default function ManutencaoForm({ onSave }: ManutencaoFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="kmAtual" className="text-sm sm:text-base font-semibold">KM Atual *</Label>
+            <Label htmlFor="kmAtual" className="text-sm sm:text-base font-semibold">
+              KM Atual * 
+              <span className="text-xs text-gray-500 dark:text-gray-400 ml-2 font-normal">
+                (Preenchido automaticamente)
+              </span>
+            </Label>
             <Input
               id="kmAtual"
               type="number"
@@ -209,7 +226,7 @@ export default function ManutencaoForm({ onSave }: ManutencaoFormProps) {
               value={kmAtual}
               onChange={(e) => setKmAtual(e.target.value)}
               required
-              className="text-base sm:text-lg h-12 border-2 focus:border-blue-500 dark:focus:border-blue-600 transition-all shadow-sm"
+              className="text-base sm:text-lg h-12 border-2 focus:border-blue-500 dark:focus:border-blue-600 transition-all shadow-sm bg-blue-50 dark:bg-blue-950/30"
             />
           </div>
 

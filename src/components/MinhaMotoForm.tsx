@@ -6,11 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bike, Save, Edit2, Info } from 'lucide-react';
+import { Bike, Save, Edit2, Info, AlertTriangle, Clock } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { getVeiculo, saveVeiculo } from '@/lib/storage';
 import { Veiculo } from '@/lib/types';
 import { marcasMotos, obterRecomendacaoOleo, obterDadosModelo } from '@/lib/motoData';
+import { verificarAlertasManutencao } from '@/lib/calculations';
 
 interface MinhaMotoFormProps {
   onSave?: () => void;
@@ -22,12 +24,12 @@ export default function MinhaMotoForm({ onSave }: MinhaMotoFormProps) {
   const [marcaSelecionada, setMarcaSelecionada] = useState('');
   const [modelosFiltrados, setModelosFiltrados] = useState<string[]>([]);
   const [recomendacaoOleo, setRecomendacaoOleo] = useState('');
+  const [alertas, setAlertas] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     marca: '',
     modelo: '',
     ano: new Date().getFullYear(),
     cilindrada: 160,
-    cor: '',
     kmAtual: 0,
     capacidadeTanque: 0,
     tipoOleo: '',
@@ -43,7 +45,6 @@ export default function MinhaMotoForm({ onSave }: MinhaMotoFormProps) {
         modelo: veiculoSalvo.modelo,
         ano: veiculoSalvo.ano,
         cilindrada: veiculoSalvo.cilindrada,
-        cor: veiculoSalvo.cor || '',
         kmAtual: veiculoSalvo.kmAtual,
         capacidadeTanque: (veiculoSalvo as any).capacidadeTanque || 0,
         tipoOleo: (veiculoSalvo as any).tipoOleo || '',
@@ -67,6 +68,9 @@ export default function MinhaMotoForm({ onSave }: MinhaMotoFormProps) {
         );
         setRecomendacaoOleo(recomendacao);
       }
+
+      // Carregar alertas de manutenção
+      setAlertas(verificarAlertasManutencao());
     } else {
       setEditMode(true);
     }
@@ -140,7 +144,7 @@ export default function MinhaMotoForm({ onSave }: MinhaMotoFormProps) {
       ano: formData.ano,
       placa: '', // Campo removido, mantido vazio para compatibilidade
       cilindrada: formData.cilindrada,
-      cor: formData.cor,
+      cor: '', // Campo removido
       kmAtual: formData.kmAtual,
       capacidadeTanque: formData.capacidadeTanque,
       tipoOleo: formData.tipoOleo,
@@ -150,77 +154,118 @@ export default function MinhaMotoForm({ onSave }: MinhaMotoFormProps) {
     saveVeiculo(novoVeiculo as any);
     setVeiculo(novoVeiculo as any);
     setEditMode(false);
+    setAlertas(verificarAlertasManutencao());
     toast.success(veiculo ? 'Moto atualizada com sucesso!' : 'Moto cadastrada com sucesso!');
     onSave?.();
   };
 
   if (!editMode && veiculo) {
     return (
-      <Card className="border-2 border-orange-200 dark:border-orange-900 bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/30 dark:to-red-950/30 shadow-xl">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl shadow-lg">
-                <Bike className="w-6 h-6 text-white" />
+      <div className="space-y-4">
+        <Card className="border-2 border-orange-200 dark:border-orange-900 bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/30 dark:to-red-950/30 shadow-xl">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl shadow-lg">
+                  <Bike className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">Minha Moto</CardTitle>
+                  <CardDescription>Informações do seu veículo</CardDescription>
+                </div>
               </div>
-              <div>
-                <CardTitle className="text-xl">Minha Moto</CardTitle>
-                <CardDescription>Informações do seu veículo</CardDescription>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setEditMode(true)}
+                className="hover:bg-orange-100 dark:hover:bg-orange-950"
+              >
+                <Edit2 className="w-4 h-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">Marca</p>
+                <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{veiculo.marca || '-'}</p>
               </div>
-            </div>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setEditMode(true)}
-              className="hover:bg-orange-100 dark:hover:bg-orange-950"
-            >
-              <Edit2 className="w-4 h-4" />
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">Marca</p>
-              <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{veiculo.marca || '-'}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">Modelo</p>
-              <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{veiculo.modelo}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">Ano</p>
-              <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{veiculo.ano}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">KM Atual</p>
-              <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{veiculo.kmAtual.toLocaleString()} km</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">Cilindrada</p>
-              <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{veiculo.cilindrada}cc</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">Cor</p>
-              <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{veiculo.cor || '-'}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">Tanque</p>
-              <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{(veiculo as any).capacidadeTanque || '-'} L</p>
-            </div>
-            <div className="space-y-1 col-span-2">
-              <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">Tipo de Óleo Recomendado</p>
-              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{(veiculo as any).tipoOleo || '-'}</p>
-            </div>
-            {veiculo.observacoes && (
+              <div className="space-y-1">
+                <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">Modelo</p>
+                <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{veiculo.modelo}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">Ano</p>
+                <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{veiculo.ano}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">KM Atual</p>
+                <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{veiculo.kmAtual.toLocaleString()} km</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">Cilindrada</p>
+                <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{veiculo.cilindrada}cc</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">Tanque</p>
+                <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{(veiculo as any).capacidadeTanque || '-'} L</p>
+              </div>
               <div className="space-y-1 col-span-2">
-                <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">Observações</p>
-                <p className="text-sm text-gray-700 dark:text-gray-300">{veiculo.observacoes}</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">Tipo de Óleo Recomendado</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{(veiculo as any).tipoOleo || '-'}</p>
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              {veiculo.observacoes && (
+                <div className="space-y-1 col-span-2">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">Observações</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">{veiculo.observacoes}</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Card de Manutenções Próximas */}
+        {alertas.length > 0 && (
+          <Card className="border-2 border-yellow-200 dark:border-yellow-900 bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-950/30 dark:to-orange-950/30 shadow-xl">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl shadow-lg">
+                  <AlertTriangle className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">Manutenções Próximas</CardTitle>
+                  <CardDescription>Fique atento aos prazos</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {alertas.map((alerta, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-xl transition-all hover:scale-[1.02] duration-200 gap-2 shadow-md border border-yellow-200 dark:border-yellow-900"
+                  >
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <Clock className="w-4 h-4 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
+                      <span className="font-semibold capitalize text-gray-900 dark:text-gray-100 text-sm truncate">
+                        {alerta.tipo}
+                      </span>
+                    </div>
+                    <Badge 
+                      variant={alerta.urgente ? 'destructive' : 'secondary'} 
+                      className="flex-shrink-0 text-xs shadow-sm"
+                    >
+                      {alerta.urgente
+                        ? 'Urgente!'
+                        : `${alerta.kmRestante.toFixed(0)} km`}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     );
   }
 
@@ -321,16 +366,6 @@ export default function MinhaMotoForm({ onSave }: MinhaMotoFormProps) {
                   Preenchido automaticamente
                 </p>
               )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="cor">Cor</Label>
-              <Input
-                id="cor"
-                placeholder="Ex: Vermelha"
-                value={formData.cor}
-                onChange={(e) => setFormData({ ...formData, cor: e.target.value })}
-              />
             </div>
 
             <div className="space-y-2">
