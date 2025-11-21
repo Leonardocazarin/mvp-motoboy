@@ -115,7 +115,6 @@ export default function HistoricoView() {
   const monthlyKm = monthlyRecords.reduce((sum, r) => sum + (r.kmRodados || 0), 0);
   const monthlyGasto = monthlyAbastecimentos.reduce((sum, a) => sum + a.valorPago, 0);
   const monthlyLitros = monthlyAbastecimentos.reduce((sum, a) => sum + a.litros, 0);
-  const monthlyConsumo = monthlyLitros > 0 ? monthlyKm / monthlyLitros : 0;
 
   if (error) {
     return (
@@ -330,9 +329,9 @@ export default function HistoricoView() {
                       </p>
                     </div>
                     <div className="p-3 sm:p-4 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-lg">
-                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">Consumo Médio</p>
+                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">Custo por KM</p>
                       <p className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">
-                        {monthlyConsumo > 0 ? `${monthlyConsumo.toFixed(1)} km/l` : '--'}
+                        {monthlyKm > 0 ? `R$ ${(monthlyGasto / monthlyKm).toFixed(2)}` : '--'}
                       </p>
                     </div>
                     <div className="p-3 sm:p-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 rounded-lg">

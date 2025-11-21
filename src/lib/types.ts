@@ -61,5 +61,7 @@ export interface Veiculo {
   cilindrada: number;
   cor?: string;
   kmAtual: number;
+  capacidadeTanque?: number;
+  tipoOleo?: string;
   observacoes?: string;
 }

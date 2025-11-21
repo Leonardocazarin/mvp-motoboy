@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Bike, Fuel, Wrench, History, Play, Square, AlertTriangle, LogOut } from 'lucide-react';
+import { Bike, Fuel, Wrench, History, Play, Square, AlertTriangle, LogOut, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,6 +16,7 @@ import AuthForm from '@/components/AuthForm';
 import AbastecimentoForm from '@/components/AbastecimentoForm';
 import ManutencaoForm from '@/components/ManutencaoForm';
 import HistoricoView from '@/components/HistoricoView';
+import MinhaMotoForm from '@/components/MinhaMotoForm';
 import { NotificationManager } from '@/components/NotificationManager';
 
 export default function MotoboyCockpit() {
@@ -257,7 +258,7 @@ export default function MotoboyCockpit() {
                 onClick={handleLogout}
                 className="transition-all duration-300 hover:scale-110 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-300 dark:hover:border-red-700 h-9 w-9 sm:h-10 sm:w-10 shadow-md"
               >
-                <LogOut className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 dark:text-red-400" />
+                <LogOut className="h-4 w-4 sm:h-5 sm:h-5 text-red-600 dark:text-red-400" />
               </Button>
             </div>
           </div>
@@ -381,7 +382,7 @@ export default function MotoboyCockpit() {
           </CardContent>
         </Card>
 
-        {/* Estatísticas Premium - ALTERADO */}
+        {/* Estatísticas Premium */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
           <Card className="transition-all duration-300 hover:shadow-2xl hover:scale-[1.03] border-2 border-blue-200 dark:border-blue-900 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30">
             <CardHeader className="pb-2 sm:pb-3">
@@ -430,7 +431,7 @@ export default function MotoboyCockpit() {
 
         {/* Tabs Premium */}
         <Tabs defaultValue="abastecimento" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 h-auto p-1.5 bg-gradient-to-r from-slate-200 via-orange-100 to-slate-200 dark:from-slate-800 dark:via-orange-950/50 dark:to-slate-800 shadow-lg rounded-xl">
+          <TabsList className="grid w-full grid-cols-4 h-auto p-1.5 bg-gradient-to-r from-slate-200 via-orange-100 to-slate-200 dark:from-slate-800 dark:via-orange-950/50 dark:to-slate-800 shadow-lg rounded-xl">
             <TabsTrigger 
               value="abastecimento" 
               className="flex items-center gap-1 sm:gap-2 py-2.5 sm:py-3 data-[state=active]:bg-gradient-to-br data-[state=active]:from-orange-500 data-[state=active]:to-red-600 data-[state=active]:text-white transition-all duration-300 data-[state=active]:shadow-xl data-[state=active]:scale-105 text-xs sm:text-base font-semibold rounded-lg"
@@ -455,6 +456,14 @@ export default function MotoboyCockpit() {
               <span className="hidden sm:inline">Histórico</span>
               <span className="sm:hidden">Hist.</span>
             </TabsTrigger>
+            <TabsTrigger 
+              value="minha-moto" 
+              className="flex items-center gap-1 sm:gap-2 py-2.5 sm:py-3 data-[state=active]:bg-gradient-to-br data-[state=active]:from-green-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white transition-all duration-300 data-[state=active]:shadow-xl data-[state=active]:scale-105 text-xs sm:text-base font-semibold rounded-lg"
+            >
+              <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="hidden sm:inline">Minha Moto</span>
+              <span className="sm:hidden">Moto</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="abastecimento" className="mt-4 sm:mt-6 animate-in fade-in slide-in-from-bottom-3 duration-500">
@@ -467,6 +476,10 @@ export default function MotoboyCockpit() {
 
           <TabsContent value="historico" className="mt-4 sm:mt-6 animate-in fade-in slide-in-from-bottom-3 duration-500">
             <HistoricoView />
+          </TabsContent>
+
+          <TabsContent value="minha-moto" className="mt-4 sm:mt-6 animate-in fade-in slide-in-from-bottom-3 duration-500">
+            <MinhaMotoForm onSave={atualizarDados} />
           </TabsContent>
         </Tabs>
       </div>
