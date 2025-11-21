@@ -42,8 +42,8 @@ export const viewport: Viewport = {
   themeColor: "#ea580c",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  maximumScale: 5,
+  userScalable: true,
 };
 
 export default function RootLayout({
@@ -55,7 +55,6 @@ export default function RootLayout({
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
         <Script src="/lasy-bridge.js" strategy="beforeInteractive" />
-        <Script src="/register-sw.js" strategy="afterInteractive" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
@@ -77,6 +76,7 @@ export default function RootLayout({
           {children}
           <Toaster position="top-center" richColors />
         </ThemeProvider>
+        <Script src="/register-sw.js" strategy="afterInteractive" />
       </body>
     </html>
   );

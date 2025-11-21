@@ -28,8 +28,8 @@ export const calcularGastosHoje = (): number => {
   const abastecimentos = getAbastecimentos().filter(a => a.date === hoje);
   const manutencoes = getManutencoes().filter(m => m.date === hoje);
 
-  const gastoAbastecimento = abastecimentos.reduce((sum, a) => sum + a.valorPago, 0);
-  const gastoManutencao = manutencoes.reduce((sum, m) => sum + m.valor, 0);
+  const gastoAbastecimento = abastecimentos.reduce((sum, a) => sum + (a.valorPago || 0), 0);
+  const gastoManutencao = manutencoes.reduce((sum, m) => sum + (m.custo || 0), 0);
 
   return gastoAbastecimento + gastoManutencao;
 };
@@ -41,17 +41,19 @@ export const calcularGastosMes = (): number => {
   const anoAtual = hoje.getFullYear();
 
   const abastecimentos = getAbastecimentos().filter(a => {
+    if (!a.date) return false;
     const date = new Date(a.date);
     return date.getMonth() === mesAtual && date.getFullYear() === anoAtual;
   });
 
   const manutencoes = getManutencoes().filter(m => {
+    if (!m.date) return false;
     const date = new Date(m.date);
     return date.getMonth() === mesAtual && date.getFullYear() === anoAtual;
   });
 
-  const gastoAbastecimento = abastecimentos.reduce((sum, a) => sum + a.valorPago, 0);
-  const gastoManutencao = manutencoes.reduce((sum, m) => sum + m.valor, 0);
+  const gastoAbastecimento = abastecimentos.reduce((sum, a) => sum + (a.valorPago || 0), 0);
+  const gastoManutencao = manutencoes.reduce((sum, m) => sum + (m.custo || 0), 0);
 
   return gastoAbastecimento + gastoManutencao;
 };

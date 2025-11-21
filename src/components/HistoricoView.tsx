@@ -264,7 +264,14 @@ export default function HistoricoView() {
                           return (
                             <div key={m.id} className="p-3 bg-white dark:bg-slate-900 rounded-lg border shadow-sm">
                               <div className="flex justify-between items-center gap-2 mb-2">
-                                <span className="font-medium capitalize text-sm sm:text-base truncate">{m.tipo}</span>
+                                <div className="flex-1 min-w-0">
+                                  <span className="font-medium capitalize text-sm sm:text-base block truncate">{m.tipo}</span>
+                                  {m.descricao && (
+                                    <span className="text-xs text-gray-500 dark:text-gray-400 block mt-0.5">
+                                      {m.descricao}
+                                    </span>
+                                  )}
+                                </div>
                                 <span className="text-blue-600 dark:text-blue-400 font-semibold text-sm sm:text-base flex-shrink-0">
                                   R$ {m.custo.toFixed(2)}
                                 </span>
