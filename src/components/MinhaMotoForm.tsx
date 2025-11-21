@@ -26,7 +26,6 @@ export default function MinhaMotoForm({ onSave }: MinhaMotoFormProps) {
     marca: '',
     modelo: '',
     ano: new Date().getFullYear(),
-    placa: '',
     cilindrada: 160,
     cor: '',
     kmAtual: 0,
@@ -43,7 +42,6 @@ export default function MinhaMotoForm({ onSave }: MinhaMotoFormProps) {
         marca: veiculoSalvo.marca,
         modelo: veiculoSalvo.modelo,
         ano: veiculoSalvo.ano,
-        placa: veiculoSalvo.placa,
         cilindrada: veiculoSalvo.cilindrada,
         cor: veiculoSalvo.cor || '',
         kmAtual: veiculoSalvo.kmAtual,
@@ -125,8 +123,13 @@ export default function MinhaMotoForm({ onSave }: MinhaMotoFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.modelo || !formData.placa) {
-      toast.error('Preencha pelo menos o modelo e a placa');
+    if (!formData.modelo) {
+      toast.error('Preencha pelo menos o modelo');
+      return;
+    }
+
+    if (!formData.kmAtual || formData.kmAtual <= 0) {
+      toast.error('KM Atual é obrigatório e deve ser maior que zero');
       return;
     }
 
@@ -135,7 +138,7 @@ export default function MinhaMotoForm({ onSave }: MinhaMotoFormProps) {
       marca: formData.marca,
       modelo: formData.modelo,
       ano: formData.ano,
-      placa: formData.placa.toUpperCase(),
+      placa: '', // Campo removido, mantido vazio para compatibilidade
       cilindrada: formData.cilindrada,
       cor: formData.cor,
       kmAtual: formData.kmAtual,
@@ -190,8 +193,8 @@ export default function MinhaMotoForm({ onSave }: MinhaMotoFormProps) {
               <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{veiculo.ano}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">Placa</p>
-              <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{veiculo.placa}</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">KM Atual</p>
+              <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{veiculo.kmAtual.toLocaleString()} km</p>
             </div>
             <div className="space-y-1">
               <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">Cilindrada</p>
@@ -200,10 +203,6 @@ export default function MinhaMotoForm({ onSave }: MinhaMotoFormProps) {
             <div className="space-y-1">
               <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">Cor</p>
               <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{veiculo.cor || '-'}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">KM Atual</p>
-              <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{veiculo.kmAtual.toLocaleString()} km</p>
             </div>
             <div className="space-y-1">
               <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">Tanque</p>
@@ -295,14 +294,15 @@ export default function MinhaMotoForm({ onSave }: MinhaMotoFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="placa">Placa *</Label>
+              <Label htmlFor="kmAtual">KM Atual *</Label>
               <Input
-                id="placa"
-                placeholder="ABC-1234"
-                value={formData.placa}
-                onChange={(e) => setFormData({ ...formData, placa: e.target.value.toUpperCase() })}
-                maxLength={8}
+                id="kmAtual"
+                type="number"
+                min="0"
+                value={formData.kmAtual}
+                onChange={(e) => setFormData({ ...formData, kmAtual: parseFloat(e.target.value) || 0 })}
                 required
+                placeholder="Ex: 15000"
               />
             </div>
 
@@ -330,17 +330,6 @@ export default function MinhaMotoForm({ onSave }: MinhaMotoFormProps) {
                 placeholder="Ex: Vermelha"
                 value={formData.cor}
                 onChange={(e) => setFormData({ ...formData, cor: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="kmAtual">KM Atual</Label>
-              <Input
-                id="kmAtual"
-                type="number"
-                min="0"
-                value={formData.kmAtual}
-                onChange={(e) => setFormData({ ...formData, kmAtual: parseFloat(e.target.value) || 0 })}
               />
             </div>
 
