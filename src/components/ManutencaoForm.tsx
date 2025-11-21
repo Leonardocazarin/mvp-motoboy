@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Wrench, Camera, AlertCircle } from 'lucide-react';
 import { saveManutencao } from '@/lib/storage';
@@ -26,6 +25,19 @@ const tiposManutencao = [
   'Outros',
 ];
 
+// Opções específicas para cada tipo de manutenção
+const opcoesManutencao: Record<string, string[]> = {
+  'Troca de Óleo': ['10W-30', '10W-40', '15W-40', '20W-50', 'Sintético 5W-40', 'Semi-sintético 10W-40'],
+  'Troca de Filtro': ['Filtro de Óleo', 'Filtro de Ar', 'Filtro de Combustível'],
+  'Revisão Geral': ['Revisão 1.000 km', 'Revisão 5.000 km', 'Revisão 10.000 km', 'Revisão 20.000 km'],
+  'Troca de Pneu': ['Pneu Dianteiro', 'Pneu Traseiro', 'Ambos os Pneus'],
+  'Freios': ['Freio Dianteiro', 'Freio Traseiro', 'Ambos os Freios', 'Pastilhas', 'Disco'],
+  'Corrente': ['Lubrificação', 'Regulagem', 'Troca Completa (Kit Relação)'],
+  'Velas': ['Vela Comum', 'Vela Iridium', 'Vela Platina'],
+  'Bateria': ['Bateria 5Ah', 'Bateria 7Ah', 'Bateria 9Ah', 'Recarga'],
+  'Outros': ['Especificar no campo de observações'],
+};
+
 // Recomendações de próxima manutenção baseadas no tipo
 const recomendacoesManutencao: Record<string, string> = {
   'Troca de Óleo': 'Recomenda-se trocar novamente em 1.000 km ou 1 mês',
@@ -41,13 +53,14 @@ const recomendacoesManutencao: Record<string, string> = {
 
 export default function ManutencaoForm({ onSave }: ManutencaoFormProps) {
   const [tipo, setTipo] = useState('');
-  const [descricao, setDescricao] = useState('');
+  const [opcaoEscolhida, setOpcaoEscolhida] = useState('');
   const [valor, setValor] = useState('');
   const [kmAtual, setKmAtual] = useState('');
   const [foto, setFoto] = useState<string | null>(null);
 
   // Obter recomendação automática baseada no tipo
   const recomendacao = tipo ? recomendacoesManutencao[tipo] : '';
+  const opcoes = tipo ? opcoesManutencao[tipo] : [];
 
   const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -63,7 +76,7 @@ export default function ManutencaoForm({ onSave }: ManutencaoFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!tipo || !valor || !kmAtual) {
+    if (!tipo || !opcaoEscolhida || !valor || !kmAtual) {
       alert('Preencha todos os campos obrigatórios');
       return;
     }
@@ -80,16 +93,16 @@ export default function ManutencaoForm({ onSave }: ManutencaoFormProps) {
       id: crypto.randomUUID(),
       date: new Date().toISOString().split('T')[0],
       tipo: tipo,
-      descricao: descricao,
+      descricao: opcaoEscolhida, // Agora armazena a opção escolhida
       custo: valorNum,
       kmAtual: kmNum,
-      proximaManutencaoKm: undefined, // Removido campo manual
+      proximaManutencaoKm: undefined,
       fotoUrl: foto || undefined,
     });
 
     // Limpar formulário
     setTipo('');
-    setDescricao('');
+    setOpcaoEscolhida('');
     setValor('');
     setKmAtual('');
     setFoto(null);
@@ -113,7 +126,10 @@ export default function ManutencaoForm({ onSave }: ManutencaoFormProps) {
         <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           <div className="space-y-2">
             <Label htmlFor="tipo" className="text-sm sm:text-base font-semibold">Tipo de Manutenção *</Label>
-            <Select value={tipo} onValueChange={setTipo} required>
+            <Select value={tipo} onValueChange={(value) => {
+              setTipo(value);
+              setOpcaoEscolhida(''); // Limpa opção ao mudar tipo
+            }} required>
               <SelectTrigger className="text-base sm:text-lg h-12 border-2 focus:border-blue-500 dark:focus:border-blue-600 transition-all shadow-sm">
                 <SelectValue placeholder="Selecione o tipo" />
               </SelectTrigger>
@@ -126,6 +142,30 @@ export default function ManutencaoForm({ onSave }: ManutencaoFormProps) {
               </SelectContent>
             </Select>
           </div>
+
+          {/* Opções específicas baseadas no tipo */}
+          {tipo && opcoes.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="opcao" className="text-sm sm:text-base font-semibold">
+                {tipo === 'Troca de Óleo' ? 'Tipo de Óleo *' : 
+                 tipo === 'Freios' ? 'Localização *' :
+                 tipo === 'Troca de Pneu' ? 'Localização *' :
+                 'Especificação *'}
+              </Label>
+              <Select value={opcaoEscolhida} onValueChange={setOpcaoEscolhida} required>
+                <SelectTrigger className="text-base sm:text-lg h-12 border-2 focus:border-blue-500 dark:focus:border-blue-600 transition-all shadow-sm">
+                  <SelectValue placeholder="Selecione a opção" />
+                </SelectTrigger>
+                <SelectContent>
+                  {opcoes.map((opcao) => (
+                    <SelectItem key={opcao} value={opcao} className="text-base">
+                      {opcao}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Recomendação automática baseada no tipo */}
           {recomendacao && (
@@ -143,17 +183,6 @@ export default function ManutencaoForm({ onSave }: ManutencaoFormProps) {
               </div>
             </div>
           )}
-
-          <div className="space-y-2">
-            <Label htmlFor="descricao" className="text-sm sm:text-base font-semibold">Descrição (Opcional)</Label>
-            <Textarea
-              id="descricao"
-              placeholder="Detalhes da manutenção..."
-              value={descricao}
-              onChange={(e) => setDescricao(e.target.value)}
-              className="text-base sm:text-lg min-h-[100px] border-2 focus:border-blue-500 dark:focus:border-blue-600 transition-all shadow-sm resize-none"
-            />
-          </div>
 
           <div className="space-y-2">
             <Label htmlFor="valor" className="text-sm sm:text-base font-semibold">Valor (R$) *</Label>

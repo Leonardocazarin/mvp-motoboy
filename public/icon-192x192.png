@@ -1,0 +1,26 @@
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="192" height="192" rx="32" fill="url(#gradient)"/>
+  <defs>
+    <linearGradient id="gradient" x1="0" y1="0" x2="192" y2="192" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ea580c"/>
+      <stop offset="1" stop-color="#dc2626"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Moto simplificada -->
+  <g transform="translate(40, 60)">
+    <!-- Rodas -->
+    <circle cx="20" cy="50" r="18" fill="white" opacity="0.9"/>
+    <circle cx="20" cy="50" r="12" fill="#1f2937"/>
+    <circle cx="92" cy="50" r="18" fill="white" opacity="0.9"/>
+    <circle cx="92" cy="50" r="12" fill="#1f2937"/>
+    
+    <!-- Corpo da moto -->
+    <path d="M 20 50 L 40 30 L 60 25 L 80 30 L 92 50" stroke="white" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 40 30 L 45 15 L 55 15 L 60 25" stroke="white" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="50" cy="15" r="8" fill="white"/>
+    
+    <!-- Guidão -->
+    <path d="M 60 25 L 70 20" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  </g>
+</svg>

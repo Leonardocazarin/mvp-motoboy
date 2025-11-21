@@ -16,6 +16,7 @@ import AuthForm from '@/components/AuthForm';
 import AbastecimentoForm from '@/components/AbastecimentoForm';
 import ManutencaoForm from '@/components/ManutencaoForm';
 import HistoricoView from '@/components/HistoricoView';
+import { NotificationManager } from '@/components/NotificationManager';
 
 export default function MotoboyCockpit() {
   const [user, setUser] = useState<any>(null);
@@ -73,6 +74,31 @@ export default function MotoboyCockpit() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Solicitar permissão para notificações
+  useEffect(() => {
+    if (user && 'Notification' in window && 'serviceWorker' in navigator) {
+      if (Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    }
+  }, [user]);
+
+  // Verificar alertas e enviar notificações
+  useEffect(() => {
+    if (user && alertas.length > 0) {
+      alertas.forEach(alerta => {
+        if (alerta.urgente && 'Notification' in window && Notification.permission === 'granted') {
+          new Notification('⚠️ Manutenção Urgente!', {
+            body: `${alerta.tipo}: Manutenção necessária agora!`,
+            icon: '/icon-192x192.png',
+            badge: '/icon-192x192.png',
+            tag: alerta.tipo,
+          });
+        }
+      });
+    }
+  }, [alertas, user]);
 
   // Carregar dados iniciais
   useEffect(() => {
@@ -199,6 +225,7 @@ export default function MotoboyCockpit() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50/20 to-slate-100 dark:from-slate-950 dark:via-orange-950/10 dark:to-slate-900">
+      <NotificationManager />
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-6xl">
         {/* Header Premium com Logo */}
         <div className="mb-6 sm:mb-8">
@@ -354,7 +381,7 @@ export default function MotoboyCockpit() {
           </CardContent>
         </Card>
 
-        {/* Estatísticas Premium */}
+        {/* Estatísticas Premium - ALTERADO */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
           <Card className="transition-all duration-300 hover:shadow-2xl hover:scale-[1.03] border-2 border-blue-200 dark:border-blue-900 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30">
             <CardHeader className="pb-2 sm:pb-3">
@@ -369,22 +396,22 @@ export default function MotoboyCockpit() {
 
           <Card className="transition-all duration-300 hover:shadow-2xl hover:scale-[1.03] border-2 border-green-200 dark:border-green-900 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30">
             <CardHeader className="pb-2 sm:pb-3">
-              <CardDescription className="text-xs sm:text-sm font-semibold text-green-700 dark:text-green-400">Consumo Médio</CardDescription>
+              <CardDescription className="text-xs sm:text-sm font-semibold text-green-700 dark:text-green-400">Gasto Hoje</CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent">
-                {stats.consumoMedio > 0 ? `${stats.consumoMedio.toFixed(1)} km/l` : '--'}
+                R$ {stats.gastoHoje.toFixed(2)}
               </p>
             </CardContent>
           </Card>
 
           <Card className="transition-all duration-300 hover:shadow-2xl hover:scale-[1.03] border-2 border-orange-200 dark:border-orange-900 bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/30 dark:to-red-950/30">
             <CardHeader className="pb-2 sm:pb-3">
-              <CardDescription className="text-xs sm:text-sm font-semibold text-orange-700 dark:text-orange-400">Gasto Hoje</CardDescription>
+              <CardDescription className="text-xs sm:text-sm font-semibold text-orange-700 dark:text-orange-400">Gasto Total</CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-orange-600 to-red-600 dark:from-orange-400 dark:to-red-400 bg-clip-text text-transparent">
-                R$ {stats.gastoHoje.toFixed(2)}
+                R$ {stats.gastoMes.toFixed(2)}
               </p>
             </CardContent>
           </Card>

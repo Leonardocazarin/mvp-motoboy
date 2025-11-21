@@ -19,18 +19,27 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Motoboy Manager - Controle Completo",
+  title: "Motoboy Cockpit - Controle Completo",
   description: "Aplicativo PWA para controle de entregas, abastecimentos e manutenções para motoboys",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
-    title: "Motoboy Manager",
+    statusBarStyle: "black-translucent",
+    title: "Motoboy Cockpit",
+  },
+  icons: {
+    icon: [
+      { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512x512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
+    ],
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f97316",
+  themeColor: "#ea580c",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -49,12 +58,12 @@ export default function RootLayout({
         <Script src="/register-sw.js" strategy="afterInteractive" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/icon-192.png" />
+        <link rel="apple-touch-icon" href="/icon-192x192.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="Motoboy Manager" />
+        <meta name="apple-mobile-web-app-title" content="Motoboy Cockpit" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="theme-color" content="#f97316" />
+        <meta name="theme-color" content="#ea580c" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

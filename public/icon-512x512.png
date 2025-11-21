@@ -1,0 +1,30 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="96" fill="url(#gradient)"/>
+  <defs>
+    <linearGradient id="gradient" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ea580c"/>
+      <stop offset="1" stop-color="#dc2626"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Moto simplificada -->
+  <g transform="translate(100, 160)">
+    <!-- Rodas -->
+    <circle cx="60" cy="140" r="50" fill="white" opacity="0.9"/>
+    <circle cx="60" cy="140" r="35" fill="#1f2937"/>
+    <circle cx="252" cy="140" r="50" fill="white" opacity="0.9"/>
+    <circle cx="252" cy="140" r="35" fill="#1f2937"/>
+    
+    <!-- Corpo da moto -->
+    <path d="M 60 140 L 110 80 L 165 65 L 220 80 L 252 140" stroke="white" stroke-width="16" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 110 80 L 125 40 L 155 40 L 165 65" stroke="white" stroke-width="14" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="140" cy="40" r="22" fill="white"/>
+    
+    <!-- Guidão -->
+    <path d="M 165 65 L 195 50" stroke="white" stroke-width="12" stroke-linecap="round"/>
+    
+    <!-- Detalhes -->
+    <circle cx="60" cy="140" r="15" fill="white" opacity="0.3"/>
+    <circle cx="252" cy="140" r="15" fill="white" opacity="0.3"/>
+  </g>
+</svg>
