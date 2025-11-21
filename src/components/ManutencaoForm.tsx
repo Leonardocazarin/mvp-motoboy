@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Wrench, Camera } from 'lucide-react';
+import { Wrench, Camera, AlertCircle } from 'lucide-react';
 import { saveManutencao } from '@/lib/storage';
 
 interface ManutencaoFormProps {
@@ -26,13 +26,28 @@ const tiposManutencao = [
   'Outros',
 ];
 
+// Recomendações de próxima manutenção baseadas no tipo
+const recomendacoesManutencao: Record<string, string> = {
+  'Troca de Óleo': 'Recomenda-se trocar novamente em 1.000 km ou 1 mês',
+  'Troca de Filtro': 'Recomenda-se trocar novamente em 2.000 km ou 2 meses',
+  'Revisão Geral': 'Recomenda-se fazer novamente em 3.000 km ou 3 meses',
+  'Troca de Pneu': 'Recomenda-se verificar novamente em 10.000 km ou quando apresentar desgaste',
+  'Freios': 'Recomenda-se verificar novamente em 2.000 km ou quando sentir perda de eficiência',
+  'Corrente': 'Recomenda-se lubrificar a cada 500 km e trocar em 15.000 km',
+  'Velas': 'Recomenda-se trocar novamente em 5.000 km ou 6 meses',
+  'Bateria': 'Recomenda-se verificar novamente em 6 meses ou quando apresentar problemas',
+  'Outros': 'Consulte o manual da moto para recomendações específicas',
+};
+
 export default function ManutencaoForm({ onSave }: ManutencaoFormProps) {
   const [tipo, setTipo] = useState('');
   const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState('');
   const [kmAtual, setKmAtual] = useState('');
-  const [proximaManutencao, setProximaManutencao] = useState('');
   const [foto, setFoto] = useState<string | null>(null);
+
+  // Obter recomendação automática baseada no tipo
+  const recomendacao = tipo ? recomendacoesManutencao[tipo] : '';
 
   const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -53,14 +68,22 @@ export default function ManutencaoForm({ onSave }: ManutencaoFormProps) {
       return;
     }
 
+    const valorNum = parseFloat(valor);
+    const kmNum = parseFloat(kmAtual);
+
+    if (valorNum <= 0 || kmNum <= 0) {
+      alert('Valores devem ser maiores que zero');
+      return;
+    }
+
     saveManutencao({
       id: crypto.randomUUID(),
-      data: new Date().toISOString().split('T')[0],
+      date: new Date().toISOString().split('T')[0],
       tipo: tipo,
       descricao: descricao,
-      custo: parseFloat(valor),
-      kmAtual: parseFloat(kmAtual),
-      proximaManutencaoKm: proximaManutencao ? parseFloat(proximaManutencao) : undefined,
+      custo: valorNum,
+      kmAtual: kmNum,
+      proximaManutencaoKm: undefined, // Removido campo manual
       fotoUrl: foto || undefined,
     });
 
@@ -69,7 +92,6 @@ export default function ManutencaoForm({ onSave }: ManutencaoFormProps) {
     setDescricao('');
     setValor('');
     setKmAtual('');
-    setProximaManutencao('');
     setFoto(null);
     
     onSave();
@@ -104,6 +126,23 @@ export default function ManutencaoForm({ onSave }: ManutencaoFormProps) {
               </SelectContent>
             </Select>
           </div>
+
+          {/* Recomendação automática baseada no tipo */}
+          {recomendacao && (
+            <div className="p-4 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 rounded-xl border-2 border-blue-200 dark:border-blue-900 shadow-md">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-blue-700 dark:text-blue-400 mb-1">
+                    Próxima Manutenção
+                  </p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                    {recomendacao}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="descricao" className="text-sm sm:text-base font-semibold">Descrição (Opcional)</Label>
@@ -140,19 +179,6 @@ export default function ManutencaoForm({ onSave }: ManutencaoFormProps) {
               value={kmAtual}
               onChange={(e) => setKmAtual(e.target.value)}
               required
-              className="text-base sm:text-lg h-12 border-2 focus:border-blue-500 dark:focus:border-blue-600 transition-all shadow-sm"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="proxima" className="text-sm sm:text-base font-semibold">Próxima Manutenção (KM) - Opcional</Label>
-            <Input
-              id="proxima"
-              type="number"
-              step="0.1"
-              placeholder="Ex: 16000"
-              value={proximaManutencao}
-              onChange={(e) => setProximaManutencao(e.target.value)}
               className="text-base sm:text-lg h-12 border-2 focus:border-blue-500 dark:focus:border-blue-600 transition-all shadow-sm"
             />
           </div>

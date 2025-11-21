@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CalendarIcon, TrendingUp, Fuel, Wrench, Image as ImageIcon, X } from 'lucide-react';
+import { CalendarIcon, TrendingUp, Fuel, Wrench, Image as ImageIcon, X, AlertCircle } from 'lucide-react';
 import { getDailyRecords, getAbastecimentos, getManutencoes } from '@/lib/storage';
 
 // Função de formatação de data segura e otimizada
@@ -46,6 +46,19 @@ const formatDateSafe = (date: Date | string, format: 'full' | 'month' | 'day' = 
     console.error('Erro ao formatar data:', error);
     return 'Data inválida';
   }
+};
+
+// Recomendações de próxima manutenção baseadas no tipo
+const recomendacoesManutencao: Record<string, string> = {
+  'Troca de Óleo': 'Recomenda-se trocar novamente em 1.000 km ou 1 mês',
+  'Troca de Filtro': 'Recomenda-se trocar novamente em 2.000 km ou 2 meses',
+  'Revisão Geral': 'Recomenda-se fazer novamente em 3.000 km ou 3 meses',
+  'Troca de Pneu': 'Recomenda-se verificar novamente em 10.000 km ou quando apresentar desgaste',
+  'Freios': 'Recomenda-se verificar novamente em 2.000 km ou quando sentir perda de eficiência',
+  'Corrente': 'Recomenda-se lubrificar a cada 500 km e trocar em 15.000 km',
+  'Velas': 'Recomenda-se trocar novamente em 5.000 km ou 6 meses',
+  'Bateria': 'Recomenda-se verificar novamente em 6 meses ou quando apresentar problemas',
+  'Outros': 'Consulte o manual da moto para recomendações específicas',
 };
 
 export default function HistoricoView() {
@@ -90,14 +103,14 @@ export default function HistoricoView() {
   // Filtrar dados por data selecionada
   const selectedDateStr = date ? date.toISOString().split('T')[0] : '';
   const dailyData = dailyRecords.find(r => r.date === selectedDateStr);
-  const dailyAbastecimentos = abastecimentos.filter(a => a.date === selectedDateStr);
-  const dailyManutencoes = manutencoes.filter(m => m.date === selectedDateStr);
+  const dailyAbastecimentos = abastecimentos.filter(a => a.date && typeof a.date === 'string' && a.date === selectedDateStr);
+  const dailyManutencoes = manutencoes.filter(m => m.date && typeof m.date === 'string' && m.date === selectedDateStr);
 
   // Dados mensais
   const selectedMonth = date ? date.toISOString().slice(0, 7) : '';
-  const monthlyRecords = dailyRecords.filter(r => r.date.startsWith(selectedMonth));
-  const monthlyAbastecimentos = abastecimentos.filter(a => a.date.startsWith(selectedMonth));
-  const monthlyManutencoes = manutencoes.filter(m => m.date.startsWith(selectedMonth));
+  const monthlyRecords = dailyRecords.filter(r => r.date && typeof r.date === 'string' && r.date.startsWith(selectedMonth));
+  const monthlyAbastecimentos = abastecimentos.filter(a => a.date && typeof a.date === 'string' && a.date.startsWith(selectedMonth));
+  const monthlyManutencoes = manutencoes.filter(m => m.date && typeof m.date === 'string' && m.date.startsWith(selectedMonth));
 
   const monthlyKm = monthlyRecords.reduce((sum, r) => sum + (r.kmRodados || 0), 0);
   const monthlyGasto = monthlyAbastecimentos.reduce((sum, a) => sum + a.valorPago, 0);
@@ -206,31 +219,34 @@ export default function HistoricoView() {
                         Abastecimentos
                       </h4>
                       <div className="space-y-2">
-                        {dailyAbastecimentos.map((a) => (
-                          <div key={a.id} className="p-3 bg-white dark:bg-slate-900 rounded-lg border shadow-sm">
-                            <div className="flex justify-between items-start gap-2 mb-2">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className="font-medium text-sm sm:text-base">{a.litros.toFixed(2)}L</span>
-                                  <span className="text-green-600 dark:text-green-400 font-semibold text-sm sm:text-base">
-                                    R$ {a.valorPago.toFixed(2)}
-                                  </span>
+                        {dailyAbastecimentos.map((a) => {
+                          const precoPorLitro = a.litros > 0 ? (a.valorPago / a.litros).toFixed(2) : '0.00';
+                          return (
+                            <div key={a.id} className="p-3 bg-white dark:bg-slate-900 rounded-lg border shadow-sm">
+                              <div className="flex justify-between items-start gap-2 mb-2">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="font-medium text-sm sm:text-base">{a.litros.toFixed(2)}L</span>
+                                    <span className="text-green-600 dark:text-green-400 font-semibold text-sm sm:text-base">
+                                      R$ {a.valorPago.toFixed(2)}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                                    Preço por litro: R$ {precoPorLitro}
+                                  </p>
                                 </div>
-                                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                                  {a.kmAtual.toFixed(0)} km
-                                </p>
+                                {a.fotoUrl && (
+                                  <button
+                                    onClick={() => setSelectedImage(a.fotoUrl!)}
+                                    className="flex-shrink-0 p-2 bg-blue-50 dark:bg-blue-950/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors active:scale-95"
+                                  >
+                                    <ImageIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                  </button>
+                                )}
                               </div>
-                              {a.fotoUrl && (
-                                <button
-                                  onClick={() => setSelectedImage(a.fotoUrl!)}
-                                  className="flex-shrink-0 p-2 bg-blue-50 dark:bg-blue-950/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors active:scale-95"
-                                >
-                                  <ImageIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                                </button>
-                              )}
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -243,19 +259,28 @@ export default function HistoricoView() {
                         Manutenções
                       </h4>
                       <div className="space-y-2">
-                        {dailyManutencoes.map((m) => (
-                          <div key={m.id} className="p-3 bg-white dark:bg-slate-900 rounded-lg border shadow-sm">
-                            <div className="flex justify-between items-center gap-2">
-                              <span className="font-medium capitalize text-sm sm:text-base truncate">{m.tipo}</span>
-                              <span className="text-blue-600 dark:text-blue-400 font-semibold text-sm sm:text-base flex-shrink-0">
-                                R$ {m.custo.toFixed(2)}
-                              </span>
+                        {dailyManutencoes.map((m) => {
+                          const recomendacao = recomendacoesManutencao[m.tipo] || 'Consulte o manual da moto';
+                          return (
+                            <div key={m.id} className="p-3 bg-white dark:bg-slate-900 rounded-lg border shadow-sm">
+                              <div className="flex justify-between items-center gap-2 mb-2">
+                                <span className="font-medium capitalize text-sm sm:text-base truncate">{m.tipo}</span>
+                                <span className="text-blue-600 dark:text-blue-400 font-semibold text-sm sm:text-base flex-shrink-0">
+                                  R$ {m.custo.toFixed(2)}
+                                </span>
+                              </div>
+                              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                {m.kmAtual.toFixed(0)} km
+                              </p>
+                              <div className="flex items-start gap-2 p-2 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
+                                <AlertCircle className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                                <p className="text-xs text-blue-700 dark:text-blue-300">
+                                  {recomendacao}
+                                </p>
+                              </div>
                             </div>
-                            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-                              {m.kmAtual.toFixed(0)} km
-                            </p>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -318,8 +343,8 @@ export default function HistoricoView() {
                       {monthlyRecords
                         .sort((a, b) => b.date.localeCompare(a.date))
                         .map((record) => {
-                          const dayAbast = abastecimentos.filter(a => a.date === record.date);
-                          const dayManut = manutencoes.filter(m => m.date === record.date);
+                          const dayAbast = abastecimentos.filter(a => a.date && typeof a.date === 'string' && a.date === record.date);
+                          const dayManut = manutencoes.filter(m => m.date && typeof m.date === 'string' && m.date === record.date);
                           
                           return (
                             <div key={record.id} className="p-3 sm:p-4 bg-white dark:bg-slate-900 rounded-lg border hover:shadow-md transition-shadow">

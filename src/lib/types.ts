@@ -14,16 +14,18 @@ export interface Abastecimento {
   litros: number;
   valorPago: number;
   kmAtual: number;
+  fotoUrl?: string;
 }
 
 export interface Manutencao {
   id: string;
-  tipo: 'oleo' | 'pastilhas' | 'corrente' | 'pneus' | 'filtro' | 'outro';
-  descricao: string;
   date: string;
-  kmRealizado: number;
-  valor: number;
-  proximaManutencao?: number; // km para próxima manutenção
+  tipo: string;
+  descricao: string;
+  custo: number;
+  kmAtual: number;
+  proximaManutencaoKm?: number;
+  fotoUrl?: string;
 }
 
 export interface AlertaManutencao {
@@ -38,4 +40,26 @@ export interface Estatisticas {
   gastoHoje: number;
   gastoMes: number;
   kmTotal: number;
+}
+
+export interface Usuario {
+  id: string;
+  nome: string;
+  email: string;
+  telefone?: string;
+  cpf?: string;
+  cnh?: string;
+  dataCadastro: string;
+}
+
+export interface Veiculo {
+  id: string;
+  marca: string;
+  modelo: string;
+  ano: number;
+  placa: string;
+  cilindrada: number;
+  cor?: string;
+  kmAtual: number;
+  observacoes?: string;
 }

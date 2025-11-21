@@ -15,8 +15,12 @@ interface AbastecimentoFormProps {
 export default function AbastecimentoForm({ onSave }: AbastecimentoFormProps) {
   const [litros, setLitros] = useState('');
   const [valorTotal, setValorTotal] = useState('');
-  const [kmAtual, setKmAtual] = useState('');
   const [foto, setFoto] = useState<string | null>(null);
+
+  // Calcular preço por litro automaticamente
+  const precoPorLitro = litros && valorTotal 
+    ? (parseFloat(valorTotal) / parseFloat(litros)).toFixed(2)
+    : '0.00';
 
   const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -32,24 +36,31 @@ export default function AbastecimentoForm({ onSave }: AbastecimentoFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!litros || !valorTotal || !kmAtual) {
+    if (!litros || !valorTotal) {
       alert('Preencha todos os campos obrigatórios');
+      return;
+    }
+
+    const litrosNum = parseFloat(litros);
+    const valorNum = parseFloat(valorTotal);
+
+    if (litrosNum <= 0 || valorNum <= 0) {
+      alert('Valores devem ser maiores que zero');
       return;
     }
 
     saveAbastecimento({
       id: crypto.randomUUID(),
-      data: new Date().toISOString().split('T')[0],
-      litros: parseFloat(litros),
-      valorPago: parseFloat(valorTotal),
-      kmAtual: parseFloat(kmAtual),
+      date: new Date().toISOString().split('T')[0],
+      litros: litrosNum,
+      valorPago: valorNum,
+      kmAtual: 0, // Não é mais necessário, mas mantido para compatibilidade
       fotoUrl: foto || undefined,
     });
 
     // Limpar formulário
     setLitros('');
     setValorTotal('');
-    setKmAtual('');
     setFoto(null);
     
     onSave();
@@ -97,19 +108,15 @@ export default function AbastecimentoForm({ onSave }: AbastecimentoFormProps) {
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="km" className="text-sm sm:text-base font-semibold">KM Atual *</Label>
-            <Input
-              id="km"
-              type="number"
-              step="0.1"
-              placeholder="Ex: 15234.5"
-              value={kmAtual}
-              onChange={(e) => setKmAtual(e.target.value)}
-              required
-              className="text-base sm:text-lg h-12 border-2 focus:border-orange-500 dark:focus:border-orange-600 transition-all shadow-sm"
-            />
-          </div>
+          {/* Cálculo automático do preço por litro */}
+          {litros && valorTotal && parseFloat(litros) > 0 && (
+            <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-xl border-2 border-green-200 dark:border-green-900 shadow-md">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1 font-medium">Preço por Litro</p>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                R$ {precoPorLitro}
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="foto" className="text-sm sm:text-base font-semibold">Foto do Comprovante (Opcional)</Label>
