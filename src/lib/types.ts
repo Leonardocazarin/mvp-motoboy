@@ -39,3 +39,25 @@ export interface Estatisticas {
   gastoMes: number;
   kmTotal: number;
 }
+
+export interface Usuario {
+  id: string;
+  nome: string;
+  email: string;
+  telefone?: string;
+  cpf?: string;
+  cnh?: string;
+  dataCadastro: string;
+}
+
+export interface Veiculo {
+  id: string;
+  marca: string;
+  modelo: string;
+  ano: number;
+  placa: string;
+  cilindrada: number;
+  cor?: string;
+  kmAtual: number;
+  observacoes?: string;
+}
