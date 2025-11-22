@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CalendarIcon, TrendingUp, Fuel, Wrench, Image as ImageIcon, X, AlertCircle, Pencil, Trash2 } from 'lucide-react';
+import { CalendarIcon, TrendingUp, Fuel, Wrench, Image as ImageIcon, X, AlertCircle, Trash2, Clock } from 'lucide-react';
 import { getDailyRecords, getAbastecimentos, getManutencoes, deleteAbastecimento, deleteManutencao } from '@/lib/storage';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { toast } from 'sonner';
@@ -151,7 +151,7 @@ export default function HistoricoView() {
 
   const monthlyKm = monthlyRecords.reduce((sum, r) => sum + (r.kmRodados || 0), 0);
   const monthlyGasto = monthlyAbastecimentos.reduce((sum, a) => sum + a.valorPago, 0);
-  const monthlyLitros = monthlyAbastecimentos.reduce((sum, a) => sum + a.litros, 0);
+  const monthlyMinutos = monthlyRecords.reduce((sum, r) => sum + (r.minutosRodados || 0), 0);
 
   if (error) {
     return (
@@ -239,10 +239,24 @@ export default function HistoricoView() {
                         {dailyData?.kmRodados?.toFixed(1) || '0.0'} km
                       </p>
                     </div>
+                    <div className="p-3 sm:p-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 rounded-lg">
+                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">Tempo Trabalhado</p>
+                      <p className="text-xl sm:text-2xl font-bold text-purple-600 dark:text-purple-400">
+                        {dailyData?.minutosRodados 
+                          ? `${Math.floor(dailyData.minutosRodados / 60)}h ${dailyData.minutosRodados % 60}m`
+                          : '0h 0m'}
+                      </p>
+                    </div>
                     <div className="p-3 sm:p-4 bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/30 dark:to-red-950/30 rounded-lg">
                       <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">Abastecimentos</p>
                       <p className="text-xl sm:text-2xl font-bold text-orange-600 dark:text-orange-400">
                         {dailyAbastecimentos.length}
+                      </p>
+                    </div>
+                    <div className="p-3 sm:p-4 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-lg">
+                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">Manutenções</p>
+                      <p className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">
+                        {dailyManutencoes.length}
                       </p>
                     </div>
                   </div>
@@ -383,16 +397,16 @@ export default function HistoricoView() {
                         R$ {monthlyGasto.toFixed(2)}
                       </p>
                     </div>
+                    <div className="p-3 sm:p-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 rounded-lg">
+                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">Tempo Total</p>
+                      <p className="text-xl sm:text-2xl font-bold text-purple-600 dark:text-purple-400">
+                        {Math.floor(monthlyMinutos / 60)}h {monthlyMinutos % 60}m
+                      </p>
+                    </div>
                     <div className="p-3 sm:p-4 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-lg">
                       <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">Manutenções</p>
                       <p className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">
                         {monthlyManutencoes.length}
-                      </p>
-                    </div>
-                    <div className="p-3 sm:p-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 rounded-lg">
-                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">Abastecimentos</p>
-                      <p className="text-xl sm:text-2xl font-bold text-purple-600 dark:text-purple-400">
-                        {monthlyAbastecimentos.length}
                       </p>
                     </div>
                   </div>
@@ -413,9 +427,16 @@ export default function HistoricoView() {
                                 <span className="font-medium text-sm sm:text-base">
                                   {formatDateSafe(record.date, 'day')}
                                 </span>
-                                <span className="text-blue-600 dark:text-blue-400 font-semibold text-sm sm:text-base flex-shrink-0">
-                                  {record.kmRodados?.toFixed(1) || '0.0'} km
-                                </span>
+                                <div className="text-right flex-shrink-0">
+                                  <span className="text-blue-600 dark:text-blue-400 font-semibold text-sm sm:text-base block">
+                                    {record.kmRodados?.toFixed(1) || '0.0'} km
+                                  </span>
+                                  {record.minutosRodados > 0 && (
+                                    <span className="text-purple-600 dark:text-purple-400 text-xs block">
+                                      {Math.floor(record.minutosRodados / 60)}h {record.minutosRodados % 60}m
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                               {(dayAbast.length > 0 || dayManut.length > 0) && (
                                 <div className="flex gap-3 sm:gap-4 text-xs sm:text-sm text-gray-600 dark:text-gray-400">

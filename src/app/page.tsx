@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Bike, Fuel, Wrench, History, Play, Square, AlertTriangle, LogOut, Settings, Pause } from 'lucide-react';
+import { Bike, Fuel, Wrench, History, Play, Square, AlertTriangle, LogOut, Settings, Pause, X, Menu, Clock, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -17,7 +17,9 @@ import AbastecimentoForm from '@/components/AbastecimentoForm';
 import ManutencaoForm from '@/components/ManutencaoForm';
 import HistoricoView from '@/components/HistoricoView';
 import MinhaMotoForm from '@/components/MinhaMotoForm';
+import AvisosView from '@/components/AvisosView';
 import { NotificationManager } from '@/components/NotificationManager';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 export default function MotoboyCockpit() {
   const [user, setUser] = useState<any>(null);
@@ -26,6 +28,8 @@ export default function MotoboyCockpit() {
   const [pausado, setPausado] = useState(false);
   const [tempoAtivo, setTempoAtivo] = useState('');
   const [kmPeriodo, setKmPeriodo] = useState(0);
+  const [alertasVisiveis, setAlertasVisiveis] = useState<string[]>([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [stats, setStats] = useState<Estatisticas>({
     kmHoje: 0,
     consumoMedio: 0,
@@ -113,6 +117,12 @@ export default function MotoboyCockpit() {
         setKmPeriodo(todayRecord.kmRodados || 0);
       }
       atualizarDados();
+      
+      // Carregar alertas visíveis do localStorage
+      const alertasOcultos = localStorage.getItem('alertas_ocultos');
+      if (alertasOcultos) {
+        setAlertasVisiveis(JSON.parse(alertasOcultos));
+      }
     }
   }, [user]);
 
@@ -153,9 +163,6 @@ export default function MotoboyCockpit() {
       const horas = Math.floor(diff / (1000 * 60 * 60));
       const minutos = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       
-      // NÃO atualizar minutos no storage aqui - apenas exibir
-      // Os minutos serão salvos quando finalizar o trabalho
-      
       if (horas > 0) {
         setTempoAtivo(`${horas}h ${minutos}min`);
       } else {
@@ -184,14 +191,12 @@ export default function MotoboyCockpit() {
     if (novoModo) {
       // Ativar modo trabalho
       if (todayRecord) {
-        // Preservar minutosRodados existentes ao reativar
         saveDailyRecord({
           ...todayRecord,
           modoTrabalhoAtivo: true,
           pausado: false,
           inicioTrabalho: Date.now(),
           tempoPausadoTotal: 0,
-          // Não zerar minutosRodados - manter o acumulado
         });
       } else {
         saveDailyRecord({
@@ -273,6 +278,14 @@ export default function MotoboyCockpit() {
     }
   };
 
+  const ocultarAlerta = (tipo: string) => {
+    const novosAlertasOcultos = [...alertasVisiveis, tipo];
+    setAlertasVisiveis(novosAlertasOcultos);
+    localStorage.setItem('alertas_ocultos', JSON.stringify(novosAlertasOcultos));
+  };
+
+  const alertasFiltrados = alertas.filter(a => !alertasVisiveis.includes(a.tipo));
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50/20 to-slate-100 dark:from-slate-950 dark:via-orange-950/10 dark:to-slate-900 flex items-center justify-center">
@@ -299,13 +312,31 @@ export default function MotoboyCockpit() {
         <div className="mb-6 sm:mb-8">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-              {/* Logo Premium */}
-              <div className="relative group flex-shrink-0">
-                <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl blur-md opacity-75 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="relative p-2 sm:p-3 bg-gradient-to-br from-orange-500 via-orange-600 to-red-600 rounded-2xl shadow-2xl transform group-hover:scale-105 transition-transform duration-300">
-                  <Bike className="w-8 h-8 sm:w-10 sm:h-10 text-white drop-shadow-lg" />
-                </div>
-              </div>
+              {/* Logo Premium - Clicável para abrir sidebar */}
+              <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+                <SheetTrigger asChild>
+                  <button className="relative group flex-shrink-0">
+                    <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl blur-md opacity-75 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative p-2 sm:p-3 bg-gradient-to-br from-orange-500 via-orange-600 to-red-600 rounded-2xl shadow-2xl transform group-hover:scale-105 transition-transform duration-300">
+                      <Bike className="w-8 h-8 sm:w-10 sm:h-10 text-white drop-shadow-lg" />
+                    </div>
+                  </button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-[90vw] sm:w-[400px] overflow-y-auto">
+                  <SheetHeader>
+                    <SheetTitle className="flex items-center gap-2">
+                      <Bike className="w-5 h-5 text-orange-600" />
+                      Minha Moto
+                    </SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-6">
+                    <MinhaMotoForm onSave={() => {
+                      atualizarDados();
+                      setSidebarOpen(false);
+                    }} />
+                  </div>
+                </SheetContent>
+              </Sheet>
               
               <div className="min-w-0 flex-1">
                 <h1 className="text-2xl sm:text-4xl font-bold bg-gradient-to-r from-orange-600 via-red-600 to-orange-700 dark:from-orange-400 dark:via-red-400 dark:to-orange-500 bg-clip-text text-transparent truncate">
@@ -331,18 +362,34 @@ export default function MotoboyCockpit() {
           </div>
         </div>
 
-        {/* Alertas de Manutenção Premium */}
-        {alertas.length > 0 && (
-          <Card className="mb-4 sm:mb-6 border-2 border-orange-300 dark:border-orange-700 bg-gradient-to-br from-orange-50 via-red-50/50 to-orange-50 dark:from-orange-950/30 dark:via-red-950/20 dark:to-orange-950/30 animate-in fade-in slide-in-from-top-2 duration-500 shadow-xl">
+        {/* Alertas de Manutenção Premium com botão X */}
+        {alertasFiltrados.length > 0 && (
+          <Card className="mb-4 sm:mb-6 border-2 border-orange-300 dark:border-orange-700 bg-gradient-to-br from-orange-50 via-red-50/50 to-orange-50 dark:from-orange-950/30 dark:via-red-950/20 dark:to-orange-950/30 animate-in fade-in slide-in-from-top-2 duration-500 shadow-xl relative">
             <CardHeader className="pb-2 sm:pb-3">
-              <CardTitle className="text-base sm:text-lg flex items-center gap-2 text-orange-700 dark:text-orange-400">
-                <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 animate-pulse drop-shadow-lg" />
-                Alertas de Manutenção
-              </CardTitle>
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-base sm:text-lg flex items-center gap-2 text-orange-700 dark:text-orange-400">
+                  <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 animate-pulse drop-shadow-lg" />
+                  Alertas de Manutenção
+                </CardTitle>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 hover:bg-red-100 dark:hover:bg-red-950 rounded-full transition-all hover:scale-110"
+                  onClick={() => {
+                    // Ocultar todos os alertas
+                    const todosOsAlertas = alertasFiltrados.map(a => a.tipo);
+                    const novosAlertasOcultos = [...alertasVisiveis, ...todosOsAlertas];
+                    setAlertasVisiveis(novosAlertasOcultos);
+                    localStorage.setItem('alertas_ocultos', JSON.stringify(novosAlertasOcultos));
+                  }}
+                >
+                  <X className="h-5 w-5 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400" />
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {alertas.map((alerta, idx) => (
+                {alertasFiltrados.map((alerta, idx) => (
                   <div
                     key={idx}
                     className="flex items-center justify-between p-3 sm:p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-xl transition-all hover:scale-[1.02] duration-200 gap-2 shadow-md border border-orange-200 dark:border-orange-900"
@@ -350,11 +397,21 @@ export default function MotoboyCockpit() {
                     <span className="font-semibold capitalize text-gray-900 dark:text-gray-100 text-sm sm:text-base truncate">
                       {alerta.tipo}
                     </span>
-                    <Badge variant={alerta.urgente ? 'destructive' : 'secondary'} className="flex-shrink-0 text-xs shadow-sm">
-                      {alerta.urgente
-                        ? 'Urgente!'
-                        : `${alerta.kmRestante.toFixed(0)} km`}
-                    </Badge>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <Badge variant={alerta.urgente ? 'destructive' : 'secondary'} className="text-xs shadow-sm">
+                        {alerta.urgente
+                          ? 'Urgente!'
+                          : `${alerta.kmRestante.toFixed(0)} km`}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 hover:bg-red-100 dark:hover:bg-red-950"
+                        onClick={() => ocultarAlerta(alerta.tipo)}
+                      >
+                        <X className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -523,7 +580,7 @@ export default function MotoboyCockpit() {
 
           <Card className="transition-all duration-300 hover:shadow-2xl hover:scale-[1.03] border-2 border-purple-200 dark:border-purple-900 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30">
             <CardHeader className="pb-2 sm:pb-3">
-              <CardDescription className="text-xs sm:text-sm font-semibold text-purple-700 dark:text-purple-400">Tempo Trabalhado</CardDescription>
+              <CardDescription className="text-xs sm:text-sm font-semibold text-purple-700 dark:text-purple-400">Tempo Diário</CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
@@ -532,6 +589,8 @@ export default function MotoboyCockpit() {
             </CardContent>
           </Card>
         </div>
+
+
 
         {/* Tabs Premium */}
         <Tabs defaultValue="abastecimento" className="w-full">
@@ -553,20 +612,20 @@ export default function MotoboyCockpit() {
               <span className="sm:hidden">Manut.</span>
             </TabsTrigger>
             <TabsTrigger 
+              value="avisos" 
+              className="flex items-center gap-1 sm:gap-2 py-2.5 sm:py-3 data-[state=active]:bg-gradient-to-br data-[state=active]:from-yellow-500 data-[state=active]:to-orange-600 data-[state=active]:text-white transition-all duration-300 data-[state=active]:shadow-xl data-[state=active]:scale-105 text-xs sm:text-base font-semibold rounded-lg"
+            >
+              <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="hidden sm:inline">Avisos</span>
+              <span className="sm:hidden">Avisos</span>
+            </TabsTrigger>
+            <TabsTrigger 
               value="historico" 
               className="flex items-center gap-1 sm:gap-2 py-2.5 sm:py-3 data-[state=active]:bg-gradient-to-br data-[state=active]:from-purple-500 data-[state=active]:to-pink-600 data-[state=active]:text-white transition-all duration-300 data-[state=active]:shadow-xl data-[state=active]:scale-105 text-xs sm:text-base font-semibold rounded-lg"
             >
               <History className="w-4 h-4 sm:w-5 sm:h-5" />
               <span className="hidden sm:inline">Histórico</span>
               <span className="sm:hidden">Hist.</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="minha-moto" 
-              className="flex items-center gap-1 sm:gap-2 py-2.5 sm:py-3 data-[state=active]:bg-gradient-to-br data-[state=active]:from-green-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white transition-all duration-300 data-[state=active]:shadow-xl data-[state=active]:scale-105 text-xs sm:text-base font-semibold rounded-lg"
-            >
-              <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span className="hidden sm:inline">Minha Moto</span>
-              <span className="sm:hidden">Moto</span>
             </TabsTrigger>
           </TabsList>
 
@@ -578,12 +637,12 @@ export default function MotoboyCockpit() {
             <ManutencaoForm onSave={atualizarDados} />
           </TabsContent>
 
-          <TabsContent value="historico" className="mt-4 sm:mt-6 animate-in fade-in slide-in-from-bottom-3 duration-500">
-            <HistoricoView />
+          <TabsContent value="avisos" className="mt-4 sm:mt-6 animate-in fade-in slide-in-from-bottom-3 duration-500">
+            <AvisosView />
           </TabsContent>
 
-          <TabsContent value="minha-moto" className="mt-4 sm:mt-6 animate-in fade-in slide-in-from-bottom-3 duration-500">
-            <MinhaMotoForm onSave={atualizarDados} />
+          <TabsContent value="historico" className="mt-4 sm:mt-6 animate-in fade-in slide-in-from-bottom-3 duration-500">
+            <HistoricoView />
           </TabsContent>
         </Tabs>
       </div>
