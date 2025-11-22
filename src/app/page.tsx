@@ -153,14 +153,8 @@ export default function MotoboyCockpit() {
       const horas = Math.floor(diff / (1000 * 60 * 60));
       const minutos = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       
-      // Atualizar minutos trabalhados no storage
-      if (!pausado) {
-        const minutosTotal = Math.floor(diff / (1000 * 60));
-        saveDailyRecord({
-          ...todayRecord,
-          minutosRodados: minutosTotal,
-        });
-      }
+      // NÃO atualizar minutos no storage aqui - apenas exibir
+      // Os minutos serão salvos quando finalizar o trabalho
       
       if (horas > 0) {
         setTempoAtivo(`${horas}h ${minutos}min`);
@@ -190,12 +184,14 @@ export default function MotoboyCockpit() {
     if (novoModo) {
       // Ativar modo trabalho
       if (todayRecord) {
+        // Preservar minutosRodados existentes ao reativar
         saveDailyRecord({
           ...todayRecord,
           modoTrabalhoAtivo: true,
           pausado: false,
           inicioTrabalho: Date.now(),
           tempoPausadoTotal: 0,
+          // Não zerar minutosRodados - manter o acumulado
         });
       } else {
         saveDailyRecord({
@@ -209,15 +205,28 @@ export default function MotoboyCockpit() {
           tempoPausadoTotal: 0,
         });
       }
-      setKmPeriodo(0);
+      setKmPeriodo(todayRecord?.kmRodados || 0);
       setPausado(false);
     } else {
       // Desativar modo trabalho (finalizar)
-      if (todayRecord) {
+      if (todayRecord && todayRecord.inicioTrabalho) {
+        // Calcular minutos trabalhados nesta sessão
+        const agora = Date.now();
+        const tempoPausado = todayRecord.tempoPausadoTotal || 0;
+        const diff = agora - todayRecord.inicioTrabalho - tempoPausado;
+        const minutosNestaSessao = Math.floor(diff / (1000 * 60));
+        
+        // Somar com minutos já acumulados
+        const minutosAcumulados = todayRecord.minutosRodados || 0;
+        const minutosTotal = minutosAcumulados + minutosNestaSessao;
+        
         saveDailyRecord({
           ...todayRecord,
           modoTrabalhoAtivo: false,
           pausado: false,
+          minutosRodados: minutosTotal,
+          inicioTrabalho: undefined,
+          tempoPausadoTotal: 0,
         });
       }
       setTempoAtivo('');

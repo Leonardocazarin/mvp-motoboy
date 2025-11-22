@@ -63,7 +63,8 @@ export default function ManutencaoForm({ onSave }: ManutencaoFormProps) {
   useEffect(() => {
     const veiculo = getVeiculo();
     if (veiculo && veiculo.kmAtual) {
-      setKmAtual(veiculo.kmAtual.toString());
+      // Formatar com 1 casa decimal
+      setKmAtual(veiculo.kmAtual.toFixed(1));
     }
   }, []);
 
@@ -116,7 +117,7 @@ export default function ManutencaoForm({ onSave }: ManutencaoFormProps) {
     // Manter o KM Atual preenchido para próxima manutenção
     const veiculo = getVeiculo();
     if (veiculo && veiculo.kmAtual) {
-      setKmAtual(veiculo.kmAtual.toString());
+      setKmAtual(veiculo.kmAtual.toFixed(1));
     }
     setFoto(null);
     

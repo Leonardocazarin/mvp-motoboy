@@ -96,22 +96,24 @@ export const useGeolocation = (isActive: boolean, isPaused: boolean) => {
           longitude
         );
 
-        // Apenas adicionar se a distância for significativa (> 50m) e razoável (< 5km)
+        // Apenas adicionar se a distância for significativa (> 10m) e razoável (< 1km por leitura)
         // Isso evita ruído de GPS e saltos irreais
-        if (distancia > 0.05 && distancia < 5) {
+        if (distancia > 0.01 && distancia < 1) {
           setKmRodados(prev => {
             const novoTotal = prev + distancia;
             
-            // Atualizar storage
+            // Atualizar KM Total global
             addKm(distancia);
             
             const today = new Date().toISOString().split('T')[0];
             const todayRecord = getTodayRecord();
             
+            // Atualizar registro do dia
             if (todayRecord) {
+              const novoKmDia = (todayRecord.kmRodados || 0) + distancia;
               saveDailyRecord({
                 ...todayRecord,
-                kmRodados: todayRecord.kmRodados + distancia,
+                kmRodados: novoKmDia,
               });
             } else {
               saveDailyRecord({
@@ -126,13 +128,15 @@ export const useGeolocation = (isActive: boolean, isPaused: boolean) => {
               });
             }
 
-            // Atualizar KM Atual do veículo
+            // Atualizar KM Atual do veículo SEMPRE
             const veiculo = getVeiculo();
             if (veiculo) {
+              const novoKmVeiculo = (veiculo.kmAtual || 0) + distancia;
               saveVeiculo({
                 ...veiculo,
-                kmAtual: veiculo.kmAtual + distancia,
+                kmAtual: novoKmVeiculo,
               });
+              console.log(`KM Veículo atualizado: ${novoKmVeiculo.toFixed(2)} km (+${distancia.toFixed(3)} km)`);
             }
             
             return novoTotal;

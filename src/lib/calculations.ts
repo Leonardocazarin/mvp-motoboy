@@ -66,17 +66,20 @@ export const obterEstatisticas = (): Estatisticas => {
 
 // Intervalos recomendados de manutenção (em km)
 const INTERVALOS_MANUTENCAO: Record<string, number> = {
-  'troca de óleo': 3000,
-  'filtro de óleo': 3000,
-  'filtro de ar': 6000,
-  'velas': 10000,
-  'corrente': 5000,
-  'freio dianteiro': 8000,
-  'freio traseiro': 8000,
-  'pneu dianteiro': 15000,
+  'troca de óleo': 1000,
+  'filtro de óleo': 1000,
+  'filtro de ar': 2000,
+  'velas': 5000,
+  'corrente': 500,
+  'freio dianteiro': 2000,
+  'freio traseiro': 2000,
+  'pneu dianteiro': 10000,
   'pneu traseiro': 10000,
   'bateria': 20000,
-  'revisão geral': 5000,
+  'revisão geral': 3000,
+  'troca de filtro': 2000,
+  'freios': 2000,
+  'troca de pneu': 10000,
 };
 
 export const verificarAlertasManutencao = (): AlertaManutencao[] => {
