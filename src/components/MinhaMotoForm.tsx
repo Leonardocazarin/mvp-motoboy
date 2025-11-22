@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { getVeiculo, saveVeiculo } from '@/lib/storage';
 import { Veiculo } from '@/lib/types';
-import { marcasMotos, obterRecomendacaoOleo, obterDadosModelo } from '@/lib/motoData';
+import { marcasMotos, obterRecomendacaoOleo, obterDadosModelo, obterRecomendacaoCalibragem } from '@/lib/motoData';
 import { verificarAlertasManutencao } from '@/lib/calculations';
 
 interface MinhaMotoFormProps {
@@ -24,6 +24,7 @@ export default function MinhaMotoForm({ onSave }: MinhaMotoFormProps) {
   const [marcaSelecionada, setMarcaSelecionada] = useState('');
   const [modelosFiltrados, setModelosFiltrados] = useState<string[]>([]);
   const [recomendacaoOleo, setRecomendacaoOleo] = useState('');
+  const [recomendacaoCalibragem, setRecomendacaoCalibragem] = useState('');
   const [alertas, setAlertas] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     marca: '',
@@ -33,6 +34,7 @@ export default function MinhaMotoForm({ onSave }: MinhaMotoFormProps) {
     kmAtual: 0,
     capacidadeTanque: 0,
     tipoOleo: '',
+    calibragemPneus: '',
     observacoes: '',
   });
 
@@ -48,6 +50,7 @@ export default function MinhaMotoForm({ onSave }: MinhaMotoFormProps) {
         kmAtual: veiculoSalvo.kmAtual,
         capacidadeTanque: (veiculoSalvo as any).capacidadeTanque || 0,
         tipoOleo: (veiculoSalvo as any).tipoOleo || '',
+        calibragemPneus: (veiculoSalvo as any).calibragemPneus || '',
         observacoes: veiculoSalvo.observacoes || '',
       });
       setMarcaSelecionada(veiculoSalvo.marca);
@@ -67,6 +70,14 @@ export default function MinhaMotoForm({ onSave }: MinhaMotoFormProps) {
           veiculoSalvo.kmAtual
         );
         setRecomendacaoOleo(recomendacao);
+
+        // Atualizar recomendação de calibragem
+        const calibragem = obterRecomendacaoCalibragem(
+          veiculoSalvo.marca,
+          veiculoSalvo.modelo,
+          veiculoSalvo.ano
+        );
+        setRecomendacaoCalibragem(calibragem);
       }
 
       // Carregar alertas de manutenção
@@ -112,6 +123,18 @@ export default function MinhaMotoForm({ onSave }: MinhaMotoFormProps) {
         ...prev,
         tipoOleo: recomendacao,
       }));
+
+      // Atualizar recomendação de calibragem
+      const calibragem = obterRecomendacaoCalibragem(
+        formData.marca,
+        formData.modelo,
+        formData.ano
+      );
+      setRecomendacaoCalibragem(calibragem);
+      setFormData(prev => ({
+        ...prev,
+        calibragemPneus: calibragem,
+      }));
     }
   }, [formData.marca, formData.modelo, formData.ano, formData.kmAtual]);
 
@@ -137,7 +160,7 @@ export default function MinhaMotoForm({ onSave }: MinhaMotoFormProps) {
       return;
     }
 
-    const novoVeiculo: Veiculo & { capacidadeTanque: number; tipoOleo: string } = {
+    const novoVeiculo: Veiculo & { capacidadeTanque: number; tipoOleo: string; calibragemPneus: string } = {
       id: veiculo?.id || crypto.randomUUID(),
       marca: formData.marca,
       modelo: formData.modelo,
@@ -148,6 +171,7 @@ export default function MinhaMotoForm({ onSave }: MinhaMotoFormProps) {
       kmAtual: formData.kmAtual,
       capacidadeTanque: formData.capacidadeTanque,
       tipoOleo: formData.tipoOleo,
+      calibragemPneus: formData.calibragemPneus,
       observacoes: formData.observacoes,
     };
 
@@ -203,12 +227,12 @@ export default function MinhaMotoForm({ onSave }: MinhaMotoFormProps) {
                 <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{veiculo.kmAtual.toLocaleString()} km</p>
               </div>
               <div className="space-y-1">
-                <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">Cilindrada</p>
-                <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{veiculo.cilindrada}cc</p>
-              </div>
-              <div className="space-y-1">
                 <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">Tanque</p>
                 <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{(veiculo as any).capacidadeTanque || '-'} L</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">Calibragem</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{(veiculo as any).calibragemPneus || '-'}</p>
               </div>
               <div className="space-y-1 col-span-2">
                 <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">Tipo de Óleo Recomendado</p>
@@ -352,23 +376,6 @@ export default function MinhaMotoForm({ onSave }: MinhaMotoFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="cilindrada">Cilindrada (cc)</Label>
-              <Input
-                id="cilindrada"
-                type="number"
-                value={formData.cilindrada}
-                onChange={(e) => setFormData({ ...formData, cilindrada: parseInt(e.target.value) || 0 })}
-                disabled={!!formData.modelo}
-                className={formData.modelo ? 'bg-gray-100 dark:bg-gray-800' : ''}
-              />
-              {formData.modelo && (
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Preenchido automaticamente
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="capacidadeTanque">Capacidade do Tanque (L)</Label>
               <Input
                 id="capacidadeTanque"
@@ -386,6 +393,18 @@ export default function MinhaMotoForm({ onSave }: MinhaMotoFormProps) {
                   Preenchido automaticamente
                 </p>
               )}
+            </div>
+
+            <div className="space-y-2 col-span-2">
+              <Label htmlFor="calibragemPneus" className="flex items-center gap-2">
+                Calibragem de Pneus Recomendada
+                <Info className="w-4 h-4 text-blue-500" />
+              </Label>
+              <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-900">
+                <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
+                  {recomendacaoCalibragem || 'Selecione marca e modelo para ver a recomendação'}
+                </p>
+              </div>
             </div>
 
             <div className="space-y-2 col-span-2">
