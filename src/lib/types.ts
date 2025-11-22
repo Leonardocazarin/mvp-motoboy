@@ -4,8 +4,12 @@ export interface DailyRecord {
   id: string;
   date: string; // YYYY-MM-DD
   kmRodados: number;
+  minutosRodados: number; // Novo campo para tempo trabalhado
   modoTrabalhoAtivo: boolean;
+  pausado: boolean; // Novo campo para controle de pausa
   inicioTrabalho?: number; // timestamp
+  inicioPausa?: number; // timestamp da última pausa
+  tempoPausadoTotal?: number; // tempo total pausado em ms
 }
 
 export interface Abastecimento {
@@ -40,6 +44,7 @@ export interface Estatisticas {
   gastoHoje: number;
   gastoMes: number;
   kmTotal: number;
+  tempoTrabalhado: number; // Novo campo para tempo total trabalhado em minutos
 }
 
 export interface Usuario {

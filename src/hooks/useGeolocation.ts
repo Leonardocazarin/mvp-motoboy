@@ -2,15 +2,75 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { calcularDistancia } from '@/lib/calculations';
-import { addKm, getTodayRecord, saveDailyRecord } from '@/lib/storage';
+import { addKm, getTodayRecord, saveDailyRecord, getVeiculo, saveVeiculo } from '@/lib/storage';
 
-export const useGeolocation = (isActive: boolean) => {
+export const useGeolocation = (isActive: boolean, isPaused: boolean) => {
   const [kmRodados, setKmRodados] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const lastPositionRef = useRef<{ lat: number; lon: number } | null>(null);
   const watchIdRef = useRef<number | null>(null);
+  const wakeLockRef = useRef<any>(null);
+
+  // Wake Lock para manter app ativo em segundo plano
+  useEffect(() => {
+    const requestWakeLock = async () => {
+      // Verificar se Wake Lock está disponível e se o contexto permite
+      if ('wakeLock' in navigator && isActive && !isPaused) {
+        try {
+          // Verificar se o documento está visível
+          if (document.visibilityState === 'visible') {
+            wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+            console.log('Wake Lock ativado');
+          }
+        } catch (err) {
+          // Silenciosamente ignorar erro de Wake Lock (não é crítico)
+          console.warn('Wake Lock não disponível:', err);
+        }
+      }
+    };
+
+    const releaseWakeLock = async () => {
+      if (wakeLockRef.current) {
+        try {
+          await wakeLockRef.current.release();
+          wakeLockRef.current = null;
+          console.log('Wake Lock liberado');
+        } catch (err) {
+          console.warn('Erro ao liberar Wake Lock:', err);
+        }
+      }
+    };
+
+    // Reativar Wake Lock quando documento fica visível novamente
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isActive && !isPaused) {
+        requestWakeLock();
+      }
+    };
+
+    if (isActive && !isPaused) {
+      requestWakeLock();
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    } else {
+      releaseWakeLock();
+    }
+
+    return () => {
+      releaseWakeLock();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isActive, isPaused]);
 
   useEffect(() => {
+    // Se pausado, não rastrear
+    if (isPaused) {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+      return;
+    }
+
     if (!isActive) {
       if (watchIdRef.current !== null) {
         navigator.geolocation.clearWatch(watchIdRef.current);
@@ -58,8 +118,20 @@ export const useGeolocation = (isActive: boolean) => {
                 id: crypto.randomUUID(),
                 date: today,
                 kmRodados: distancia,
+                minutosRodados: 0,
                 modoTrabalhoAtivo: true,
+                pausado: false,
                 inicioTrabalho: Date.now(),
+                tempoPausadoTotal: 0,
+              });
+            }
+
+            // Atualizar KM Atual do veículo
+            const veiculo = getVeiculo();
+            if (veiculo) {
+              saveVeiculo({
+                ...veiculo,
+                kmAtual: veiculo.kmAtual + distancia,
               });
             }
             
@@ -91,7 +163,7 @@ export const useGeolocation = (isActive: boolean) => {
         navigator.geolocation.clearWatch(watchIdRef.current);
       }
     };
-  }, [isActive]);
+  }, [isActive, isPaused]);
 
   return { kmRodados, error };
 };

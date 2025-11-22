@@ -16,6 +16,11 @@ export const obterEstatisticas = (): Estatisticas => {
   // KM Total
   const kmTotal = getKmTotal();
 
+  // Tempo Trabalhado Total (soma de todos os dias)
+  const tempoTrabalhado = dailyRecords.reduce((total, record) => {
+    return total + (record.minutosRodados || 0);
+  }, 0);
+
   // Consumo Médio (últimos 5 abastecimentos)
   let consumoMedio = 0;
   if (abastecimentos.length >= 2) {
@@ -55,6 +60,7 @@ export const obterEstatisticas = (): Estatisticas => {
     gastoHoje,
     gastoMes,
     kmTotal,
+    tempoTrabalhado,
   };
 };
 

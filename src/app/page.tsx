@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Bike, Fuel, Wrench, History, Play, Square, AlertTriangle, LogOut, Settings } from 'lucide-react';
+import { Bike, Fuel, Wrench, History, Play, Square, AlertTriangle, LogOut, Settings, Pause } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -23,6 +23,7 @@ export default function MotoboyCockpit() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [modoTrabalho, setModoTrabalho] = useState(false);
+  const [pausado, setPausado] = useState(false);
   const [tempoAtivo, setTempoAtivo] = useState('');
   const [kmPeriodo, setKmPeriodo] = useState(0);
   const [stats, setStats] = useState<Estatisticas>({
@@ -31,9 +32,10 @@ export default function MotoboyCockpit() {
     gastoHoje: 0,
     gastoMes: 0,
     kmTotal: 0,
+    tempoTrabalhado: 0,
   });
   const [alertas, setAlertas] = useState<AlertaManutencao[]>([]);
-  const { kmRodados, error } = useGeolocation(modoTrabalho);
+  const { kmRodados, error } = useGeolocation(modoTrabalho, pausado);
 
   // Verificar autenticação
   useEffect(() => {
@@ -43,7 +45,6 @@ export default function MotoboyCockpit() {
         
         if (error) {
           console.error('Erro ao obter sessão:', error);
-          // Limpar sessão inválida
           await supabase.auth.signOut();
           setUser(null);
         } else {
@@ -108,6 +109,7 @@ export default function MotoboyCockpit() {
       const todayRecord = getTodayRecord();
       if (todayRecord?.modoTrabalhoAtivo) {
         setModoTrabalho(true);
+        setPausado(todayRecord.pausado || false);
         setKmPeriodo(todayRecord.kmRodados || 0);
       }
       atualizarDados();
@@ -116,16 +118,16 @@ export default function MotoboyCockpit() {
 
   // Atualizar stats quando km mudar
   useEffect(() => {
-    if (modoTrabalho) {
+    if (modoTrabalho && !pausado) {
       atualizarDados();
       const todayRecord = getTodayRecord();
       if (todayRecord) {
         setKmPeriodo(todayRecord.kmRodados || 0);
       }
     }
-  }, [kmRodados, modoTrabalho]);
+  }, [kmRodados, modoTrabalho, pausado]);
 
-  // Timer do tempo ativo
+  // Timer do tempo ativo (atualiza minutos trabalhados)
   useEffect(() => {
     if (!modoTrabalho) {
       setTempoAtivo('');
@@ -138,10 +140,27 @@ export default function MotoboyCockpit() {
     const updateTimer = () => {
       const inicio = todayRecord.inicioTrabalho!;
       const agora = Date.now();
-      const diff = agora - inicio;
+      const tempoPausado = todayRecord.tempoPausadoTotal || 0;
+      
+      // Se está pausado, adicionar tempo desde início da pausa
+      let tempoAtualPausado = tempoPausado;
+      if (pausado && todayRecord.inicioPausa) {
+        tempoAtualPausado += (agora - todayRecord.inicioPausa);
+      }
+      
+      const diff = agora - inicio - tempoAtualPausado;
       
       const horas = Math.floor(diff / (1000 * 60 * 60));
       const minutos = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      
+      // Atualizar minutos trabalhados no storage
+      if (!pausado) {
+        const minutosTotal = Math.floor(diff / (1000 * 60));
+        saveDailyRecord({
+          ...todayRecord,
+          minutosRodados: minutosTotal,
+        });
+      }
       
       if (horas > 0) {
         setTempoAtivo(`${horas}h ${minutos}min`);
@@ -154,7 +173,7 @@ export default function MotoboyCockpit() {
     const interval = setInterval(updateTimer, 30000); // Atualiza a cada 30s
 
     return () => clearInterval(interval);
-  }, [modoTrabalho]);
+  }, [modoTrabalho, pausado]);
 
   const atualizarDados = () => {
     setStats(obterEstatisticas());
@@ -174,27 +193,65 @@ export default function MotoboyCockpit() {
         saveDailyRecord({
           ...todayRecord,
           modoTrabalhoAtivo: true,
+          pausado: false,
           inicioTrabalho: Date.now(),
+          tempoPausadoTotal: 0,
         });
       } else {
         saveDailyRecord({
           id: crypto.randomUUID(),
           date: today,
           kmRodados: 0,
+          minutosRodados: 0,
           modoTrabalhoAtivo: true,
+          pausado: false,
           inicioTrabalho: Date.now(),
+          tempoPausadoTotal: 0,
         });
       }
       setKmPeriodo(0);
+      setPausado(false);
     } else {
-      // Desativar modo trabalho
+      // Desativar modo trabalho (finalizar)
       if (todayRecord) {
         saveDailyRecord({
           ...todayRecord,
           modoTrabalhoAtivo: false,
+          pausado: false,
         });
       }
       setTempoAtivo('');
+      setPausado(false);
+      atualizarDados();
+    }
+  };
+
+  const togglePausa = () => {
+    const novoPausado = !pausado;
+    setPausado(novoPausado);
+
+    const todayRecord = getTodayRecord();
+    if (!todayRecord) return;
+
+    if (novoPausado) {
+      // Iniciar pausa
+      saveDailyRecord({
+        ...todayRecord,
+        pausado: true,
+        inicioPausa: Date.now(),
+      });
+    } else {
+      // Retomar trabalho
+      const tempoPausadoNestaPausa = todayRecord.inicioPausa 
+        ? Date.now() - todayRecord.inicioPausa 
+        : 0;
+      
+      saveDailyRecord({
+        ...todayRecord,
+        pausado: false,
+        inicioPausa: undefined,
+        tempoPausadoTotal: (todayRecord.tempoPausadoTotal || 0) + tempoPausadoNestaPausa,
+      });
     }
   };
 
@@ -299,7 +356,9 @@ export default function MotoboyCockpit() {
         {/* Modo Trabalho Premium */}
         <Card className={`mb-4 sm:mb-6 border-2 transition-all duration-500 shadow-2xl ${
           modoTrabalho 
-            ? 'border-green-400 dark:border-green-600 bg-gradient-to-br from-green-50 via-emerald-50 to-green-50 dark:from-green-950/40 dark:via-emerald-950/30 dark:to-green-950/40 shadow-green-200/50 dark:shadow-green-900/30 animate-in fade-in slide-in-from-top-3' 
+            ? pausado
+              ? 'border-yellow-400 dark:border-yellow-600 bg-gradient-to-br from-yellow-50 via-orange-50 to-yellow-50 dark:from-yellow-950/40 dark:via-orange-950/30 dark:to-yellow-950/40 shadow-yellow-200/50 dark:shadow-yellow-900/30'
+              : 'border-green-400 dark:border-green-600 bg-gradient-to-br from-green-50 via-emerald-50 to-green-50 dark:from-green-950/40 dark:via-emerald-950/30 dark:to-green-950/40 shadow-green-200/50 dark:shadow-green-900/30 animate-in fade-in slide-in-from-top-3'
             : 'border-slate-300 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm'
         }`}>
           <CardContent className="pt-4 sm:pt-6">
@@ -310,12 +369,18 @@ export default function MotoboyCockpit() {
                   <div
                     className={`p-3 sm:p-4 rounded-2xl transition-all duration-300 flex-shrink-0 shadow-lg ${
                       modoTrabalho
-                        ? 'bg-gradient-to-br from-green-500 to-emerald-600 shadow-green-300/50 dark:shadow-green-700/50 animate-pulse'
+                        ? pausado
+                          ? 'bg-gradient-to-br from-yellow-500 to-orange-600 shadow-yellow-300/50 dark:shadow-yellow-700/50 animate-pulse'
+                          : 'bg-gradient-to-br from-green-500 to-emerald-600 shadow-green-300/50 dark:shadow-green-700/50 animate-pulse'
                         : 'bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700'
                     }`}
                   >
                     {modoTrabalho ? (
-                      <Square className="w-6 h-6 sm:w-7 sm:h-7 text-white drop-shadow-md" />
+                      pausado ? (
+                        <Pause className="w-6 h-6 sm:w-7 sm:h-7 text-white drop-shadow-md" />
+                      ) : (
+                        <Square className="w-6 h-6 sm:w-7 sm:h-7 text-white drop-shadow-md" />
+                      )
                     ) : (
                       <Play className="w-6 h-6 sm:w-7 sm:h-7 text-gray-600 dark:text-gray-400" />
                     )}
@@ -323,39 +388,68 @@ export default function MotoboyCockpit() {
                   <div className="min-w-0 flex-1">
                     <h3 className={`font-bold text-lg sm:text-xl transition-colors duration-300 ${
                       modoTrabalho 
-                        ? 'text-green-700 dark:text-green-400' 
+                        ? pausado
+                          ? 'text-yellow-700 dark:text-yellow-400'
+                          : 'text-green-700 dark:text-green-400'
                         : 'text-gray-900 dark:text-gray-100'
                     }`}>
                       Modo Trabalho
                     </h3>
                     <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 font-medium">
                       {modoTrabalho
-                        ? 'Rastreando sua quilometragem'
+                        ? pausado
+                          ? 'Pausado - Retome quando quiser'
+                          : 'Rastreando sua quilometragem'
                         : 'Inicie para registrar km'}
                     </p>
                   </div>
                 </div>
-                <Button
-                  size="lg"
-                  onClick={toggleModoTrabalho}
-                  className={`w-full sm:w-auto transition-all duration-300 transform hover:scale-105 shadow-xl font-semibold ${
-                    modoTrabalho
-                      ? 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 shadow-red-300/50'
-                      : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-green-300/50'
-                  }`}
-                >
-                  {modoTrabalho ? (
-                    <>
-                      <Square className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                      Parar
-                    </>
-                  ) : (
-                    <>
-                      <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                      Iniciar
-                    </>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  {modoTrabalho && (
+                    <Button
+                      size="lg"
+                      onClick={togglePausa}
+                      className={`flex-1 sm:flex-initial transition-all duration-300 transform hover:scale-105 shadow-xl font-semibold ${
+                        pausado
+                          ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-green-300/50'
+                          : 'bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 shadow-yellow-300/50'
+                      }`}
+                    >
+                      {pausado ? (
+                        <>
+                          <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                          Retomar
+                        </>
+                      ) : (
+                        <>
+                          <Pause className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                          Pausar
+                        </>
+                      )}
+                    </Button>
                   )}
-                </Button>
+                  <Button
+                    size="lg"
+                    onClick={toggleModoTrabalho}
+                    className={`flex-1 sm:flex-initial transition-all duration-300 transform hover:scale-105 shadow-xl font-semibold ${
+                      modoTrabalho
+                        ? 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 shadow-red-300/50'
+                        : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-green-300/50'
+                    }`}
+                  >
+                    {modoTrabalho ? (
+                      <>
+                        <Square className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                        Finalizar
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                        Iniciar
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
 
               {/* Informações do período ativo */}
@@ -420,11 +514,11 @@ export default function MotoboyCockpit() {
 
           <Card className="transition-all duration-300 hover:shadow-2xl hover:scale-[1.03] border-2 border-purple-200 dark:border-purple-900 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30">
             <CardHeader className="pb-2 sm:pb-3">
-              <CardDescription className="text-xs sm:text-sm font-semibold text-purple-700 dark:text-purple-400">KM Total</CardDescription>
+              <CardDescription className="text-xs sm:text-sm font-semibold text-purple-700 dark:text-purple-400">Tempo Trabalhado</CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
-                {stats.kmTotal.toFixed(0)}
+                {Math.floor(stats.tempoTrabalhado / 60)}h {stats.tempoTrabalhado % 60}m
               </p>
             </CardContent>
           </Card>
